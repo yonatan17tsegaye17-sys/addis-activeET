@@ -3,54 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Addis Active App</title>
+    <title>Addis Active Platform</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --surface-color: #161e2e;
-            --border-color: #273548;
-            --accent-color: #f59e0b;
-            --primary-blue: #3b82f6;
+            --bg-dark: #0b0f0e;
+            --card-bg: #141b18;
+            --border-color: #243329;
+            --neon-green: #ccff00;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--bg-dark);
             color: var(--text-main);
             margin: 0;
             padding: 0;
-            padding-bottom: 80px; /* Space for bottom nav */
+            padding-bottom: 90px;
             -webkit-tap-highlight-color: transparent;
         }
-        /* App Header Bar */
-        .app-header {
-            background: var(--surface-color);
-            padding: 16px;
+        /* Top Brand Bar */
+        .top-brand {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-dark);
             border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .app-header h2 {
-            margin: 0;
-            font-size: 18px;
-            color: var(--accent-color);
+        .brand-title {
+            font-weight: 900;
+            letter-spacing: 1px;
+            font-size: 16px;
+            color: #fff;
         }
-        .user-stats-pill {
-            background: #0f172a;
-            border: 1px solid var(--border-color);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+        .brand-badge {
+            background: rgba(204, 255, 0, 0.15);
+            color: var(--neon-green);
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 4px;
             font-weight: bold;
-            color: #34d399;
         }
-        /* App Screens */
+        .profile-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 14px;
+        }
+        /* Screens */
         .screen {
             display: none;
             padding: 16px;
@@ -58,78 +65,89 @@
         .screen.active {
             display: block;
         }
-        /* Cards & UI Elements */
-        .app-card {
-            background: var(--surface-color);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
+        /* Cards */
+        .card {
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
-        .app-card h3 {
-            margin: 0 0 6px 0;
-            font-size: 16px;
-            color: #60a5fa;
+        .card-tag {
+            font-size: 11px;
+            color: var(--neon-green);
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .app-card p {
+        .card h2 {
+            font-size: 24px;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+        .card p {
             color: var(--text-muted);
             font-size: 13px;
-            margin: 0 0 12px 0;
+            margin: 0 0 16px 0;
             line-height: 1.4;
         }
-        /* Simulated Video Feed */
-        .video-container {
-            background: #020617;
-            border-radius: 12px;
-            height: 160px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--border-color);
-            margin-bottom: 12px;
-            position: relative;
-            overflow: hidden;
-            color: var(--text-muted);
-            font-size: 12px;
-            text-align: center;
-        }
-        .play-btn {
-            background: rgba(59, 130, 246, 0.8);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 8px;
-            cursor: pointer;
-        }
         /* Buttons */
-        .btn-action {
-            background: var(--primary-blue);
-            color: white;
+        .btn-primary {
+            background: var(--neon-green);
+            color: #000;
             border: none;
-            width: 100%;
-            padding: 12px;
+            font-weight: bold;
+            padding: 12px 20px;
             border-radius: 12px;
             font-size: 14px;
-            font-weight: bold;
             cursor: pointer;
+            width: 100%;
+            text-align: center;
         }
-        .btn-action:active {
-            opacity: 0.8;
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
         }
-        /* Bottom App Navigation Bar */
+        /* Sub-cards inside views */
+        .sub-card {
+            background: #0f1512;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        /* Progress Bar */
+        .progress-bar-bg {
+            background: #243329;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .progress-bar-fill {
+            background: var(--neon-green);
+            height: 100%;
+            width: 33%;
+        }
+        /* Bottom Navigation Bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--surface-color);
+            background: #0b0f0e;
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
@@ -139,115 +157,169 @@
         .nav-item {
             text-align: center;
             color: var(--text-muted);
-            font-size: 11px;
+            font-size: 10px;
             cursor: pointer;
             flex: 1;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
         .nav-item.active {
-            color: var(--primary-blue);
-            font-weight: bold;
+            color: var(--neon-green);
         }
         .nav-icon {
-            font-size: 18px;
+            font-size: 16px;
             margin-bottom: 2px;
-        }
-        /* Badges Grid */
-        .badge-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .badge-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 16px;
-            text-align: center;
-        }
-        .badge-card.unlocked {
-            border-color: #10b981;
-            background: rgba(6, 78, 59, 0.3);
         }
     </style>
 </head>
 <body>
 
-    <!-- App Header -->
-    <div class="app-header">
-        <h2>🇪🇹 Addis Active</h2>
-        <div class="user-stats-pill" id="stat-pill">⚡ 5 KM Logged</div>
+    <!-- Top Brand Header -->
+    <div class="top-brand">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--neon-green); font-size: 16px;">⚡</span>
+            <span class="brand-title">ADDIS ACTIVE</span>
+        </div>
+        <div class="brand-badge">PWA PLATFORM</div>
     </div>
 
-    <!-- SCREEN 1: EXPLORE HUB -->
-    <div id="screen-explore" class="screen active">
-        <div class="app-card">
-            <h3>🌲 Entoto Mountain Trail</h3>
-            <div class="video-container">
-                <button class="play-btn">▶</button>
-                <span>Watch Route Preview (Entoto Peak)</span>
+    <!-- HOME SCREEN -->
+    <div id="screen-home" class="screen active">
+        <div class="card">
+            <div class="card-tag">📍 Addis Ababa • 2,355m Altitude</div>
+            <h2>GOOD MORNING, YONATAN TSEHAYE</h2>
+            <p>Engine tuned for Running across Addis corridors.</p>
+            <div style="font-size: 12px; font-weight: bold; margin-bottom: 12px; color: var(--neon-green);">
+                LVL 1 ATHLETE • 50 XP
             </div>
-            <p>📍 Entoto Park • 5KM Morning Run<br>☕ Perk: Free traditional coffee at partner cafes.</p>
-            <button class="btn-action" onclick="registerActivity('Entoto Run', 5)">JOIN & LOG 5KM</button>
+            <button class="btn-primary" onclick="switchTab('explore', document.querySelectorAll('.nav-item')[1])">Active Near Me</button>
+            <button class="btn-secondary" onclick="switchTab('track', document.querySelectorAll('.nav-item')[2])">Start GPS Session</button>
         </div>
 
-        <div class="app-card">
-            <h3>🏛️ Meskel Square Urban Jog</h3>
-            <div class="video-container">
-                <button class="play-btn">▶</button>
-                <span>Watch Route Preview (City Center)</span>
-            </div>
-            <p>📍 Meskel Square • 4KM Sunset Jog<br>🤝 Community meet & warm-up session.</p>
-            <button class="btn-action" onclick="registerActivity('Meskel Jog', 4)">JOIN & LOG 4KM</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 2: VIDEO EXPLORATION -->
-    <div id="screen-videos" class="screen">
-        <div class="app-card">
-            <h3>🎥 Addis Movement Stories</h3>
-            <p>Explore city trails, community running clips, and cultural landmarks through immersive video previews.</p>
-            <div class="video-container" style="height: 200px;">
-                <button class="play-btn">▶</button>
-                <span>[ Full Screen Route Showcase ]</span>
+        <div class="card">
+            <div class="card-tag">Addis Active Today</div>
+            <h3 style="font-size: 18px; margin: 0 0 8px 0;">Nearest to You</h3>
+            <p>Sorted dynamically by your current GPS position with full route telemetry.</p>
+            
+            <div class="sub-card">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
+                    <span>📺 Watch: Piassa Vintage Architecture</span>
+                    <span style="color: var(--neon-green);">4:00</span>
+                </div>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">🚶‍♂️ Walk • Piassa</div>
+                <p style="margin: 0; font-size: 12px;">Piazza historic walk through colonial and post-liberation architectural marvels.</p>
             </div>
         </div>
     </div>
 
-    <!-- SCREEN 3: PROFILE & GAMIFICATION -->
-    <div id="screen-profile" class="screen">
-        <div class="app-card" style="text-align: center;">
-            <h3 style="font-size: 20px; color: var(--accent-color);">Runner Dashboard</h3>
-            <p>Total Movement: <strong id="total-km" style="color: #fff; font-size: 16px;">5 KM</strong></p>
-        </div>
-
-        <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-muted);">Your Badges & Achievements</h3>
-        <div class="badge-grid">
-            <div class="badge-card unlocked">
-                <div style="font-size: 24px;">🏔️</div>
-                <div style="font-weight: bold; font-size: 13px; margin-top: 6px;">Entoto Pioneer</div>
-                <div style="font-size: 11px; color: #10b981; margin-top: 2px;">Unlocked</div>
-            </div>
-            <div class="badge-card" id="b-10km">
-                <div style="font-size: 24px;">⚡</div>
-                <div style="font-weight: bold; font-size: 13px; margin-top: 6px;">10KM Club</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Locked</div>
+    <!-- EXPLORE SCREEN -->
+    <div id="screen-explore" class="screen">
+        <div class="card">
+            <div class="card-tag">Multi-Activity & Video Discovery</div>
+            <h2 style="font-size: 22px;">Explore 23+ Addis Locations</h2>
+            <p>Classified strictly by exercise category (Running, Walking, Cycling, Hiking, Football, Fitness).</p>
+            
+            <div class="sub-card">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
+                    <span>📺 Watch: CMC Quiet Roads Ride</span>
+                    <span style="color: var(--neon-green);">4:30</span>
+                </div>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">🏃‍♂️ Run • CMC</div>
+                <p style="margin: 0; font-size: 12px;">Quiet suburban residential tarmac roads.</p>
+                <div style="margin-top: 10px; font-size: 11px; color: var(--neon-green);">
+                    📐 6.5 KM | ⚡ +60m Gain | 🧭 Asphalt Roads
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- BOTTOM APP NAVIGATION BAR -->
+    <!-- TRACK SCREEN -->
+    <div id="screen-track" class="screen">
+        <div class="card" style="text-align: center;">
+            <div class="card-tag">Live GPS Engine</div>
+            <h2 style="font-size: 22px;">Multi-Activity Tracker</h2>
+            <p>Define your activity type before starting your local GPS session.</p>
+            
+            <div style="font-size: 36px; font-weight: 900; color: var(--neon-green); margin: 20px 0; font-family: monospace;">
+                00:00:00
+            </div>
+            <button class="btn-primary" onclick="startTracking()">Start Session (+100 XP)</button>
+        </div>
+    </div>
+
+    <!-- COMMUNITY SCREEN -->
+    <div id="screen-community" class="screen">
+        <div class="card">
+            <div class="card-tag">Community Network</div>
+            <h2 style="font-size: 22px;">Active Addis Communities</h2>
+            <p>Connect with running clubs, cycling networks, and walking groups.</p>
+            
+            <div class="sub-card">
+                <div style="font-size: 12px; color: var(--neon-green); font-weight: bold; margin-bottom: 4px;">RUNNING CLUB • ENTOTO & BOLE</div>
+                <h3 style="margin: 0 0 6px 0; font-size: 16px;">Bertusew Running Club</h3>
+                <p style="margin: 0 0 10px 0; font-size: 12px;">Dedicated community of high-altitude runners meeting every Sunday morning.</p>
+                <button class="btn-primary" style="padding: 8px; font-size: 12px;" onclick="alert('Joined community layer!')">Join Community Layer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CITY PULSE SCREEN -->
+    <div id="screen-pulse" class="screen">
+        <div class="card">
+            <div class="card-tag">Real-Time Vibe</div>
+            <h2 style="font-size: 22px;">City Pulse</h2>
+            <p>Live atmospheric metrics across Addis Ababa neighborhoods.</p>
+            <div class="sub-card">
+                <div style="font-weight: bold;">🟢 Bole Air Quality: Pristine (AQI 22)</div>
+                <div style="font-weight: bold; margin-top: 8px;">🔥 Entoto Peak: High Energy (140+ Active Runners)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JOURNEY SCREEN -->
+    <div id="screen-journey" class="screen">
+        <div class="card">
+            <div class="card-tag">My Journey & Gamification</div>
+            <h2 style="font-size: 20px;">Yonatan Tsegaye's Dashboard</h2>
+            <p>Level 1 Athlete • 50 / 150 XP to Next Level</p>
+            
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill"></div>
+            </div>
+
+            <div class="sub-card" style="margin-top: 16px;">
+                <div style="font-weight: bold; margin-bottom: 4px;">🎯 Personal Goals</div>
+                <div style="font-size: 12px; color: var(--text-muted);">First Running Session: 0 KM / 5 KM (In Progress)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION BAR -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchScreen('explore', this)">
-            <div class="nav-icon">🏃‍♂️</div>
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <div class="nav-icon">🏠</div>
+            Home
+        </div>
+        <div class="nav-item" onclick="switchTab('explore', this)">
+            <div class="nav-icon">🗺️️</div>
             Explore
         </div>
-        <div class="nav-item" onclick="switchScreen('videos', this)">
-            <div class="nav-icon">🎥</div>
-            Videos
+        <div class="nav-item" onclick="switchTab('track', this)">
+            <div class="nav-icon">⚡</div>
+            Track
         </div>
-        <div class="nav-item" onclick="switchScreen('profile', this)">
-            <div class="nav-icon">🏆</div>
-            Profile
+        <div class="nav-item" onclick="switchTab('community', this)">
+            <div class="nav-icon">👥</div>
+            Community
+        </div>
+        <div class="nav-item" onclick="switchTab('pulse', this)">
+            <div class="nav-icon">🏛️</div>
+            City Pulse
+        </div>
+        <div class="nav-item" onclick="switchTab('journey', this)">
+            <div class="nav-icon">👤</div>
+            Journey
         </div>
     </div>
 
@@ -255,16 +327,11 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let userKm = 5;
-
-        function switchScreen(screenName, element) {
-            // Hide all screens
+        function switchTab(screenId, element) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            // Remove active class from nav items
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-            // Show selected screen
-            document.getElementById('screen-' + screenName).classList.add('active');
+            document.getElementById('screen-' + screenId).classList.add('active');
             element.classList.add('active');
 
             if (tg.HapticFeedback) {
@@ -272,20 +339,8 @@
             }
         }
 
-        function registerActivity(eventName, km) {
-            userKm += km;
-            document.getElementById('stat-pill').innerText = `⚡ ${userKm} KM Logged`;
-            document.getElementById('total-km').innerText = `${userKm} KM`;
-            
-            // Unlock 10km badge if threshold met
-            if (userKm >= 10) {
-                document.getElementById('b-10km').classList.add('unlocked');
-                document.getElementById('b-10km').querySelector('div:last-child').innerText = 'Unlocked';
-                document.getElementById('b-10km').querySelector('div:last-child').style.color = '#10b981';
-            }
-
-            alert(`🎉 Success! Registered for ${eventName}. Movement stats updated.`);
-            
+        function startTracking() {
+            alert('GPS Session Started! Earned +100 XP.');
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
