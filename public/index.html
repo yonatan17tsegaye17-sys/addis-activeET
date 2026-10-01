@@ -3,59 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Addis Active Platform</title>
+    <title>Addis Active</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-dark: #0b0f0e;
-            --card-bg: #141b18;
-            --border-color: #243329;
-            --neon-green: #ccff00;
+            --bg-base: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --accent-yellow: #facc15;
+            --accent-blue: #38bdf8;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-base);
             color: var(--text-main);
             margin: 0;
             padding: 0;
             padding-bottom: 90px;
             -webkit-tap-highlight-color: transparent;
         }
-        /* Top Brand Bar */
-        .top-brand {
+        /* Top Navigation Bar */
+        .app-topbar {
+            background: var(--card-bg);
+            padding: 14px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
-            background: var(--bg-dark);
             border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .brand-title {
-            font-weight: 900;
-            letter-spacing: 1px;
+        .app-topbar h1 {
+            margin: 0;
             font-size: 16px;
-            color: #fff;
+            color: var(--accent-yellow);
         }
-        .brand-badge {
-            background: rgba(204, 255, 0, 0.15);
-            color: var(--neon-green);
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .profile-btn {
-            background: var(--card-bg);
+        .xp-pill {
+            background: #0f172a;
             border: 1px solid var(--border-color);
-            padding: 6px 10px;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #34d399;
+            font-weight: bold;
         }
         /* Screens */
         .screen {
@@ -65,107 +58,87 @@
         .screen.active {
             display: block;
         }
-        /* Cards */
-        .card {
+        /* Modular Cards */
+        .module-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 20px;
+            padding: 18px;
             margin-bottom: 16px;
         }
-        .card-tag {
-            font-size: 11px;
-            color: var(--neon-green);
-            font-weight: bold;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .module-card h3 {
+            margin: 0 0 6px 0;
+            font-size: 18px;
+            color: var(--accent-blue);
         }
-        .card h2 {
-            font-size: 24px;
-            font-weight: 900;
-            margin: 0 0 10px 0;
-            line-height: 1.1;
-            text-transform: uppercase;
-        }
-        .card p {
+        .module-card p {
             color: var(--text-muted);
             font-size: 13px;
-            margin: 0 0 16px 0;
+            margin: 0 0 14px 0;
             line-height: 1.4;
         }
-        /* Buttons */
-        .btn-primary {
-            background: var(--neon-green);
-            color: #000;
-            border: none;
-            font-weight: bold;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
+        /* Category Filter Pills */
+        .filter-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+        }
+        .filter-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            white-space: nowrap;
             cursor: pointer;
+        }
+        .filter-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #3b82f6;
+        }
+        /* Action Buttons */
+        .action-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
             width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
             text-align: center;
         }
-        .btn-secondary {
-            background: transparent;
-            color: #fff;
-            border: 1px solid var(--border-color);
-            font-weight: bold;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 8px;
+        .action-btn:active {
+            background: #1d4ed8;
         }
-        /* Sub-cards inside views */
-        .sub-card {
-            background: #0f1512;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-        /* Progress Bar */
-        .progress-bar-bg {
-            background: #243329;
-            height: 8px;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        .progress-bar-fill {
-            background: var(--neon-green);
-            height: 100%;
-            width: 33%;
-        }
-        /* Bottom Navigation Bar */
+        /* Bottom App Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #0b0f0e;
+            background: var(--card-bg);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
             padding: 10px 0;
             z-index: 1000;
         }
-        .nav-item {
+        .nav-tab {
             text-align: center;
             color: var(--text-muted);
             font-size: 10px;
             cursor: pointer;
             flex: 1;
-            text-transform: uppercase;
             font-weight: bold;
-            letter-spacing: 0.5px;
         }
-        .nav-item.active {
-            color: var(--neon-green);
+        .nav-tab.active {
+            color: var(--accent-blue);
         }
         .nav-icon {
             font-size: 16px;
@@ -175,151 +148,101 @@
 </head>
 <body>
 
-    <!-- Top Brand Header -->
-    <div class="top-brand">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="color: var(--neon-green); font-size: 16px;">⚡</span>
-            <span class="brand-title">ADDIS ACTIVE</span>
-        </div>
-        <div class="brand-badge">PWA PLATFORM</div>
+    <!-- Top Bar -->
+    <div class="app-topbar">
+        <h1>🇪🇹 Addis Active</h1>
+        <div class="xp-pill" id="user-xp">LVL 1 • 50 XP</div>
     </div>
 
-    <!-- HOME SCREEN -->
+    <!-- SCREEN 1: HOME -->
     <div id="screen-home" class="screen active">
-        <div class="card">
-            <div class="card-tag">📍 Addis Ababa • 2,355m Altitude</div>
-            <h2>GOOD MORNING, YONATAN TSEHAYE</h2>
-            <p>Engine tuned for Running across Addis corridors.</p>
-            <div style="font-size: 12px; font-weight: bold; margin-bottom: 12px; color: var(--neon-green);">
-                LVL 1 ATHLETE • 50 XP
-            </div>
-            <button class="btn-primary" onclick="switchTab('explore', document.querySelectorAll('.nav-item')[1])">Active Near Me</button>
-            <button class="btn-secondary" onclick="switchTab('track', document.querySelectorAll('.nav-item')[2])">Start GPS Session</button>
+        <div class="module-card" style="background: linear-gradient(135deg, #1e3a8a, #0f172a);">
+            <div style="font-size: 11px; color: var(--accent-yellow); font-weight: bold; margin-bottom: 4px;">📍 ADDIS ABABA • 2,355M ALTITUDE</div>
+            <h2 style="margin: 0 0 6px 0; font-size: 20px;">Welcome, Explorer</h2>
+            <p style="color: #cbd5e1; margin-bottom: 14px;">Movement connects you to the heartbeat of the city.</p>
+            <button class="action-btn" onclick="switchView('explore', document.querySelectorAll('.nav-tab')[1])">Explore Active Hubs</button>
         </div>
 
-        <div class="card">
-            <div class="card-tag">Addis Active Today</div>
-            <h3 style="font-size: 18px; margin: 0 0 8px 0;">Nearest to You</h3>
-            <p>Sorted dynamically by your current GPS position with full route telemetry.</p>
-            
-            <div class="sub-card">
-                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
-                    <span>📺 Watch: Piassa Vintage Architecture</span>
-                    <span style="color: var(--neon-green);">4:00</span>
-                </div>
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">🚶‍♂️ Walk • Piassa</div>
-                <p style="margin: 0; font-size: 12px;">Piazza historic walk through colonial and post-liberation architectural marvels.</p>
-            </div>
+        <div class="module-card">
+            <h3>Featured: Entoto Bertusew Run</h3>
+            <p>📍 Entoto Park • 5KM Trail<br>Breathe fresh mountain air and connect with the community at the peak.</p>
+            <button class="action-btn" onclick="logSession('Entoto Run', 5, 50)">JOIN & LOG 5KM</button>
         </div>
     </div>
 
-    <!-- EXPLORE SCREEN -->
+    <!-- SCREEN 2: EXPLORE HUB -->
     <div id="screen-explore" class="screen">
-        <div class="card">
-            <div class="card-tag">Multi-Activity & Video Discovery</div>
-            <h2 style="font-size: 22px;">Explore 23+ Addis Locations</h2>
-            <p>Classified strictly by exercise category (Running, Walking, Cycling, Hiking, Football, Fitness).</p>
-            
-            <div class="sub-card">
-                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
-                    <span>📺 Watch: CMC Quiet Roads Ride</span>
-                    <span style="color: var(--neon-green);">4:30</span>
-                </div>
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 4px;">🏃‍♂️ Run • CMC</div>
-                <p style="margin: 0; font-size: 12px;">Quiet suburban residential tarmac roads.</p>
-                <div style="margin-top: 10px; font-size: 11px; color: var(--neon-green);">
-                    📐 6.5 KM | ⚡ +60m Gain | 🧭 Asphalt Roads
-                </div>
-            </div>
+        <div class="filter-scroll">
+            <div class="filter-btn active">All Hubs</div>
+            <div class="filter-btn">🌲 Entoto</div>
+            <div class="filter-btn">🏛️ Meskel Square</div>
+            <div class="filter-btn">☕ Bole</div>
+        </div>
+
+        <div class="module-card">
+            <h3>Meskel Square Urban Jog</h3>
+            <p>📍 City Center • 4KM Sunset Route<br>Explore historical monuments and urban corridors.</p>
+            <button class="action-btn" onclick="logSession('Meskel Jog', 4, 40)">JOIN & LOG 4KM</button>
         </div>
     </div>
 
-    <!-- TRACK SCREEN -->
+    <!-- SCREEN 3: GPS TRACKER ENGINE -->
     <div id="screen-track" class="screen">
-        <div class="card" style="text-align: center;">
-            <div class="card-tag">Live GPS Engine</div>
-            <h2 style="font-size: 22px;">Multi-Activity Tracker</h2>
-            <p>Define your activity type before starting your local GPS session.</p>
-            
-            <div style="font-size: 36px; font-weight: 900; color: var(--neon-green); margin: 20px 0; font-family: monospace;">
+        <div class="module-card" style="text-align: center;">
+            <h3>Live GPS Tracker</h3>
+            <p>Telemetry engine active for tracking movement paths across Addis.</p>
+            <div style="font-size: 32px; font-weight: bold; color: #34d399; margin: 20px 0; font-family: monospace;" id="timer-display">
                 00:00:00
             </div>
-            <button class="btn-primary" onclick="startTracking()">Start Session (+100 XP)</button>
+            <button class="action-btn" onclick="startGpsSession()">Start GPS Session (+100 XP)</button>
         </div>
     </div>
 
-    <!-- COMMUNITY SCREEN -->
+    <!-- SCREEN 4: COMMUNITY NETWORK -->
     <div id="screen-community" class="screen">
-        <div class="card">
-            <div class="card-tag">Community Network</div>
-            <h2 style="font-size: 22px;">Active Addis Communities</h2>
-            <p>Connect with running clubs, cycling networks, and walking groups.</p>
-            
-            <div class="sub-card">
-                <div style="font-size: 12px; color: var(--neon-green); font-weight: bold; margin-bottom: 4px;">RUNNING CLUB • ENTOTO & BOLE</div>
-                <h3 style="margin: 0 0 6px 0; font-size: 16px;">Bertusew Running Club</h3>
-                <p style="margin: 0 0 10px 0; font-size: 12px;">Dedicated community of high-altitude runners meeting every Sunday morning.</p>
-                <button class="btn-primary" style="padding: 8px; font-size: 12px;" onclick="alert('Joined community layer!')">Join Community Layer</button>
-            </div>
+        <div class="module-card">
+            <h3>Bertusew Running Club</h3>
+            <p>📅 Sundays at 6:30 AM<br>📍 Entoto Park Gate 1<br>Dedicated community of high-altitude runners.</p>
+            <button class="action-btn" onclick="alert('Joined community network!')">Join Community</button>
         </div>
     </div>
 
-    <!-- CITY PULSE SCREEN -->
+    <!-- SCREEN 5: CITY PULSE -->
     <div id="screen-pulse" class="screen">
-        <div class="card">
-            <div class="card-tag">Real-Time Vibe</div>
-            <h2 style="font-size: 22px;">City Pulse</h2>
-            <p>Live atmospheric metrics across Addis Ababa neighborhoods.</p>
-            <div class="sub-card">
-                <div style="font-weight: bold;">🟢 Bole Air Quality: Pristine (AQI 22)</div>
-                <div style="font-weight: bold; margin-top: 8px;">🔥 Entoto Peak: High Energy (140+ Active Runners)</div>
-            </div>
+        <div class="module-card">
+            <h3>City Air & Energy Pulse</h3>
+            <p>🟢 Bole Air Quality: Pristine (AQI 22)<br>🔥 Entoto Peak: High Energy (140+ Active Runners)</p>
         </div>
     </div>
 
-    <!-- JOURNEY SCREEN -->
+    <!-- SCREEN 6: JOURNEY & GAMIFICATION -->
     <div id="screen-journey" class="screen">
-        <div class="card">
-            <div class="card-tag">My Journey & Gamification</div>
-            <h2 style="font-size: 20px;">Yonatan Tsegaye's Dashboard</h2>
-            <p>Level 1 Athlete • 50 / 150 XP to Next Level</p>
-            
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill"></div>
-            </div>
-
-            <div class="sub-card" style="margin-top: 16px;">
-                <div style="font-weight: bold; margin-bottom: 4px;">🎯 Personal Goals</div>
-                <div style="font-size: 12px; color: var(--text-muted);">First Running Session: 0 KM / 5 KM (In Progress)</div>
-            </div>
+        <div class="module-card">
+            <h3>Athlete Dashboard</h3>
+            <p>Total Distance Logged: <strong id="total-km" style="color: #fff;">5 KM</strong></p>
+            <p>Current Rank: <strong style="color: var(--accent-yellow);">Level 1 Explorer</strong></p>
         </div>
     </div>
 
-    <!-- BOTTOM NAVIGATION BAR -->
+    <!-- BOTTOM APP NAVIGATION -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home', this)">
-            <div class="nav-icon">🏠</div>
-            Home
+        <div class="nav-tab active" onclick="switchView('home', this)">
+            <div class="nav-icon">🏠</div>Home
         </div>
-        <div class="nav-item" onclick="switchTab('explore', this)">
-            <div class="nav-icon">🗺️️</div>
-            Explore
+        <div class="nav-tab" onclick="switchView('explore', this)">
+            <div class="nav-icon">🗺️</div>Explore
         </div>
-        <div class="nav-item" onclick="switchTab('track', this)">
-            <div class="nav-icon">⚡</div>
-            Track
+        <div class="nav-tab" onclick="switchView('track', this)">
+            <div class="nav-icon">⚡</div>Track
         </div>
-        <div class="nav-item" onclick="switchTab('community', this)">
-            <div class="nav-icon">👥</div>
-            Community
+        <div class="nav-tab" onclick="switchView('community', this)">
+            <div class="nav-icon">👥</div>Community
         </div>
-        <div class="nav-item" onclick="switchTab('pulse', this)">
-            <div class="nav-icon">🏛️</div>
-            City Pulse
+        <div class="nav-tab" onclick="switchView('pulse', this)">
+            <div class="nav-icon">🏛️</div>Pulse
         </div>
-        <div class="nav-item" onclick="switchTab('journey', this)">
-            <div class="nav-icon">👤</div>
-            Journey
+        <div class="nav-tab" onclick="switchView('journey', this)">
+            <div class="nav-icon">👤</div>Journey
         </div>
     </div>
 
@@ -327,9 +250,12 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        function switchTab(screenId, element) {
+        let totalKm = 5;
+        let totalXp = 50;
+
+        function switchView(screenId, element) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
             document.getElementById('screen-' + screenId).classList.add('active');
             element.classList.add('active');
@@ -339,11 +265,21 @@
             }
         }
 
-        function startTracking() {
-            alert('GPS Session Started! Earned +100 XP.');
+        function logSession(name, km, xp) {
+            totalKm += km;
+            totalXp += xp;
+            document.getElementById('total-km').innerText = totalKm + ' KM';
+            document.getElementById('user-xp').innerText = `LVL 1 • ${totalXp} XP`;
+            
+            alert(`🎉 Success! Logged ${name}. +${xp} XP earned.`);
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
+        }
+
+        function startGpsSession() {
+            alert('GPS Tracking initialized! Movement telemetry recording active.');
+            logSession('GPS Free Run', 3, 100);
         }
     </script>
 </body>
