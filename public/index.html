@@ -2,212 +2,293 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Addis Active</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Addis Active App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --bg-color: #0b0f19;
+            --surface-color: #161e2e;
+            --border-color: #273548;
+            --accent-color: #f59e0b;
+            --primary-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* Space for bottom nav */
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* App Header Bar */
+        .app-header {
+            background: var(--surface-color);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .app-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--accent-color);
+        }
+        .user-stats-pill {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #34d399;
+        }
+        /* App Screens */
+        .screen {
+            display: none;
             padding: 16px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 16px;
+        .screen.active {
+            display: block;
         }
-        .header h1 {
-            color: #facc15;
-            margin: 0 0 4px 0;
-            font-size: 22px;
-        }
-        .header p {
-            color: #94a3b8;
-            font-size: 13px;
-            margin: 0;
-        }
-        /* Neighborhood Selector Tabs */
-        .tabs {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            margin-bottom: 16px;
-            padding-bottom: 4px;
-        }
-        .tab {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #cbd5e1;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        .tab.active {
-            background: #2563eb;
-            color: white;
-            border-color: #3b82f6;
-        }
-        .card {
-            background: #1e293b;
+        /* Cards & UI Elements */
+        .app-card {
+            background: var(--surface-color);
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 16px;
-            border: 1px solid #334155;
+            border: 1px solid var(--border-color);
         }
-        .card h3 {
+        .app-card h3 {
             margin: 0 0 6px 0;
-            font-size: 17px;
-            color: #38bdf8;
+            font-size: 16px;
+            color: #60a5fa;
         }
-        .card p {
-            color: #cbd5e1;
+        .app-card p {
+            color: var(--text-muted);
             font-size: 13px;
             margin: 0 0 12px 0;
             line-height: 1.4;
         }
-        /* Video Preview Container */
-        .video-box {
-            background: #0f172a;
-            border-radius: 10px;
-            height: 140px;
+        /* Simulated Video Feed */
+        .video-container {
+            background: #020617;
+            border-radius: 12px;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-align: center;
+        }
+        .play-btn {
+            background: rgba(59, 130, 246, 0.8);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 12px;
-            border: 1px dashed #475569;
-            color: #94a3b8;
-            font-size: 13px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            margin-bottom: 8px;
+            cursor: pointer;
         }
-        .video-box video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        /* Gamification Badges */
-        .badges-section {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .badge {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 10px;
-            text-align: center;
-            flex: 1;
-        }
-        .badge.unlocked {
-            border-color: #10b981;
-            background: #064e3b;
-        }
-        .badge-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-        .badge-title {
-            font-size: 11px;
-            color: #cbd5e1;
-            font-weight: bold;
-        }
-        .btn {
-            background: #2563eb;
+        /* Buttons */
+        .btn-action {
+            background: var(--primary-blue);
             color: white;
             border: none;
             width: 100%;
             padding: 12px;
-            border-radius: 10px;
-            font-size: 15px;
+            border-radius: 12px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
         }
-        .btn:active {
-            background: #1d4ed8;
+        .btn-action:active {
+            opacity: 0.8;
         }
-        #success-msg {
-            display: none;
-            background: #065f46;
-            color: #6ee7b7;
-            padding: 12px;
-            border-radius: 10px;
+        /* Bottom App Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        .nav-item {
             text-align: center;
-            margin-top: 12px;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            flex: 1;
+        }
+        .nav-item.active {
+            color: var(--primary-blue);
             font-weight: bold;
-            font-size: 13px;
+        }
+        .nav-icon {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+        /* Badges Grid */
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .badge-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+        }
+        .badge-card.unlocked {
+            border-color: #10b981;
+            background: rgba(6, 78, 59, 0.3);
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🇪🇹 Addis Active</h1>
-        <p>Movement Connects Addis Ababa</p>
+
+    <!-- App Header -->
+    <div class="app-header">
+        <h2>🇪🇹 Addis Active</h2>
+        <div class="user-stats-pill" id="stat-pill">⚡ 5 KM Logged</div>
     </div>
 
-    <!-- 1. Neighborhood Hub Tabs -->
-    <div class="tabs">
-        <div class="tab active" onclick="filterHub('all')">🌟 All Hubs</div>
-        <div class="tab" onclick="filterHub('entoto')">🌲 Entoto Trail</div>
-        <div class="tab" onclick="filterHub('meskel')">🏛️ Meskel Square</div>
-        <div class="tab" onclick="filterHub('bole')">☕ Bole Metro</div>
+    <!-- SCREEN 1: EXPLORE HUB -->
+    <div id="screen-explore" class="screen active">
+        <div class="app-card">
+            <h3>🌲 Entoto Mountain Trail</h3>
+            <div class="video-container">
+                <button class="play-btn">▶</button>
+                <span>Watch Route Preview (Entoto Peak)</span>
+            </div>
+            <p>📍 Entoto Park • 5KM Morning Run<br>☕ Perk: Free traditional coffee at partner cafes.</p>
+            <button class="btn-action" onclick="registerActivity('Entoto Run', 5)">JOIN & LOG 5KM</button>
+        </div>
+
+        <div class="app-card">
+            <h3>🏛️ Meskel Square Urban Jog</h3>
+            <div class="video-container">
+                <button class="play-btn">▶</button>
+                <span>Watch Route Preview (City Center)</span>
+            </div>
+            <p>📍 Meskel Square • 4KM Sunset Jog<br>🤝 Community meet & warm-up session.</p>
+            <button class="btn-action" onclick="registerActivity('Meskel Jog', 4)">JOIN & LOG 4KM</button>
+        </div>
     </div>
 
-    <!-- Gamification & Badges Section -->
-    <div class="badges-section">
-        <div class="badge unlocked" id="badge-1">
-            <div class="badge-icon">🏔️</div>
-            <div class="badge-title">Entoto Pioneer</div>
-        </div>
-        <div class="badge" id="badge-2">
-            <div class="badge-icon">⚡</div>
-            <div class="badge-title">10KM Club</div>
-        </div>
-        <div class="badge" id="badge-3">
-            <div class="badge-icon">☕</div>
-            <div class="badge-title">Cafe Perker</div>
+    <!-- SCREEN 2: VIDEO EXPLORATION -->
+    <div id="screen-videos" class="screen">
+        <div class="app-card">
+            <h3>🎥 Addis Movement Stories</h3>
+            <p>Explore city trails, community running clips, and cultural landmarks through immersive video previews.</p>
+            <div class="video-container" style="height: 200px;">
+                <button class="play-btn">▶</button>
+                <span>[ Full Screen Route Showcase ]</span>
+            </div>
         </div>
     </div>
 
-    <!-- Event Card with Video Exploration & Fitness Tracker -->
-    <div class="card" data-hub="entoto">
-        <h3>Entoto Bertusew Run</h3>
-        
-        <!-- 2. Video-Based Exploration Preview -->
-        <div class="video-box">
-            <span>🎥 Entoto Trail Preview<br><small>Fresh mountain air & altitude run</small></span>
+    <!-- SCREEN 3: PROFILE & GAMIFICATION -->
+    <div id="screen-profile" class="screen">
+        <div class="app-card" style="text-align: center;">
+            <h3 style="font-size: 20px; color: var(--accent-color);">Runner Dashboard</h3>
+            <p>Total Movement: <strong id="total-km" style="color: #fff; font-size: 16px;">5 KM</strong></p>
         </div>
 
-        <p>📍 <strong>Location:</strong> Entoto Park<br>🏃‍♂️ <strong>Distance:</strong> 5KM Morning Trail<br>🤝 <strong>Impact Perk:</strong> Free post-run traditional coffee at partner local cafes!</p>
-        
-        <button class="btn" onclick="joinRun()">JOIN & LOG MOVEMENT</button>
-        <div id="success-msg">🎉 Registered! +5KM added to your fitness tracker. Badge Unlocked!</div>
+        <h3 style="font-size: 15px; margin-bottom: 12px; color: var(--text-muted);">Your Badges & Achievements</h3>
+        <div class="badge-grid">
+            <div class="badge-card unlocked">
+                <div style="font-size: 24px;">🏔️</div>
+                <div style="font-weight: bold; font-size: 13px; margin-top: 6px;">Entoto Pioneer</div>
+                <div style="font-size: 11px; color: #10b981; margin-top: 2px;">Unlocked</div>
+            </div>
+            <div class="badge-card" id="b-10km">
+                <div style="font-size: 24px;">⚡</div>
+                <div style="font-weight: bold; font-size: 13px; margin-top: 6px;">10KM Club</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Locked</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM APP NAVIGATION BAR -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchScreen('explore', this)">
+            <div class="nav-icon">🏃‍♂️</div>
+            Explore
+        </div>
+        <div class="nav-item" onclick="switchScreen('videos', this)">
+            <div class="nav-icon">🎥</div>
+            Videos
+        </div>
+        <div class="nav-item" onclick="switchScreen('profile', this)">
+            <div class="nav-icon">🏆</div>
+            Profile
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        function joinRun() {
-            document.querySelector('.btn').style.display = 'none';
-            document.getElementById('success-msg').style.display = 'block';
+        let userKm = 5;
+
+        function switchScreen(screenName, element) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            // Show selected screen
+            document.getElementById('screen-' + screenName).classList.add('active');
+            element.classList.add('active');
+
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.selectionChanged();
+            }
+        }
+
+        function registerActivity(eventName, km) {
+            userKm += km;
+            document.getElementById('stat-pill').innerText = `⚡ ${userKm} KM Logged`;
+            document.getElementById('total-km').innerText = `${userKm} KM`;
             
-            // Unlock Badge visually
-            document.getElementById('badge-2').classList.add('unlocked');
+            // Unlock 10km badge if threshold met
+            if (userKm >= 10) {
+                document.getElementById('b-10km').classList.add('unlocked');
+                document.getElementById('b-10km').querySelector('div:last-child').innerText = 'Unlocked';
+                document.getElementById('b-10km').querySelector('div:last-child').style.color = '#10b981';
+            }
+
+            alert(`🎉 Success! Registered for ${eventName}. Movement stats updated.`);
             
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
-        }
-
-        function filterHub(hub) {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
         }
     </script>
 </body>
