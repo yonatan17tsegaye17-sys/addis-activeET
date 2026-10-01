@@ -6,6 +6,7 @@ const bot = new Telegraf(token);
 global.usersDB = global.usersDB || {};
 global.participationsDB = global.participationsDB || [];
 
+// Telegram /start command
 bot.start(async (ctx) => {
   const user = ctx.from || {};
   const firstName = user.first_name || 'Explorer';
@@ -29,6 +30,248 @@ bot.start(async (ctx) => {
   );
 });
 
+// Embedded Frontend HTML to guarantee it loads instantly inside Telegram
+const frontendHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Addis Active</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-base: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --accent-yellow: #facc15;
+            --accent-blue: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 90px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-topbar {
+            background: var(--card-bg);
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .app-topbar h1 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--accent-yellow);
+        }
+        .xp-pill {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #34d399;
+            font-weight: bold;
+        }
+        .screen {
+            display: none;
+            padding: 16px;
+        }
+        .screen.active {
+            display: block;
+        }
+        .module-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+        .module-card h3 {
+            margin: 0 0 6px 0;
+            font-size: 18px;
+            color: var(--accent-blue);
+        }
+        .module-card p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin: 0 0 14px 0;
+            line-height: 1.4;
+        }
+        .action-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .action-btn:active {
+            background: #1d4ed8;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        .nav-tab {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 10px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: bold;
+        }
+        .nav-tab.active {
+            color: var(--accent-blue);
+        }
+        .nav-icon {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-topbar">
+        <h1 id="welcome-header">🇪🇹 Addis Active</h1>
+        <div class="xp-pill" id="user-xp">LVL 1 • 50 XP</div>
+    </div>
+
+    <!-- SCREEN 1: HOME -->
+    <div id="screen-home" class="screen active">
+        <div class="module-card" style="background: linear-gradient(135deg, #1e3a8a, #0f172a);">
+            <div style="font-size: 11px; color: var(--accent-yellow); font-weight: bold; margin-bottom: 4px;">📍 ADDIS ABABA • 2,355M ALTITUDE</div>
+            <h2 id="user-greeting" style="margin: 0 0 6px 0; font-size: 20px;">Welcome, Explorer</h2>
+            <p style="color: #cbd5e1; margin-bottom: 14px;">Movement connects Addis Ababa. What is your move today?</p>
+        </div>
+
+        <div class="module-card">
+            <h3>Featured: Entoto Bertusew Run</h3>
+            <p>📍 Entoto Park • 5KM Trail<br>Breathe fresh mountain air and connect with the community at the peak.</p>
+            <button class="action-btn" onclick="realJoin('act_bertusew_01', 'Entoto Bertusew Run')">JOIN BERTUSEW RUN</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: EXPLORE -->
+    <div id="screen-explore" class="screen">
+        <div class="module-card">
+            <h3>Meskel Square Urban Jog</h3>
+            <p>📍 City Center • 4KM Sunset Route<br>Explore historical monuments and urban corridors.</p>
+            <button class="action-btn" onclick="realJoin('act_meskel_01', 'Meskel Square Urban Jog')">JOIN MESKEL JOG</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: TRACK -->
+    <div id="screen-track" class="screen">
+        <div class="module-card" style="text-align: center;">
+            <h3>Live GPS Tracker</h3>
+            <p>Telemetry engine active for tracking movement paths across Addis.</p>
+            <button class="action-btn" onclick="alert('Manual activity logger coming up next!')">Log Manual Activity</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: COMMUNITY -->
+    <div id="screen-community" class="screen">
+        <div class="module-card">
+            <h3>Bertusew Running Club</h3>
+            <p>📅 Sundays at 6:30 AM<br>📍 Entoto Park Gate 1<br>Dedicated community of high-altitude runners.</p>
+            <button class="action-btn" onclick="alert('Community network layer active.')">View Community</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 5: PULSE -->
+    <div id="screen-pulse" class="screen">
+        <div class="module-card">
+            <h3>City Air & Energy Pulse</h3>
+            <p>🟢 Bole Air Quality: Pristine (AQI 22)<br>🔥 Entoto Peak: High Energy (140+ Active Runners)</p>
+        </div>
+    </div>
+
+    <!-- SCREEN 6: JOURNEY -->
+    <div id="screen-journey" class="screen">
+        <div class="module-card">
+            <h3>Athlete Dashboard</h3>
+            <p>Registered Activities: <strong id="reg-count" style="color: #fff;">0</strong></p>
+            <p>Current Rank: <strong style="color: var(--accent-yellow);">Level 1 Explorer</strong></p>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+        <div class="nav-tab active" onclick="switchView('home', this)"><div class="nav-icon">🏠</div>Home</div>
+        <div class="nav-tab" onclick="switchView('explore', this)"><div class="nav-icon">🗺️</div>Explore</div>
+        <div class="nav-tab" onclick="switchView('track', this)"><div class="nav-icon">⚡</div>Track</div>
+        <div class="nav-tab" onclick="switchView('community', this)"><div class="nav-icon">👥</div>Community</div>
+        <div class="nav-tab" onclick="switchView('pulse', this)"><div class="nav-icon">🏛️</div>Pulse</div>
+        <div class="nav-tab" onclick="switchView('journey', this)"><div class="nav-icon">👤</div>Journey</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const telegramUser = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : { id: 999999, first_name: "Explorer" };
+        document.getElementById('user-greeting').innerText = \`Welcome, \${telegramUser.first_name}\`;
+        document.getElementById('welcome-header').innerText = \`🇪🇹 Addis Active (\${telegramUser.first_name})\`;
+
+        function switchView(screenId, element) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+            element.classList.add('active');
+            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+        }
+
+        async function realJoin(activityId, activityName) {
+            try {
+                const response = await fetch('/api/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: telegramUser.id,
+                        firstName: telegramUser.first_name,
+                        activityId: activityId,
+                        activityName: activityName
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (err) {
+                alert('Network error connecting to backend.');
+            }
+        }
+    </script>
+</body>
+</html>`;
+
+// Simplified `vercel.json` routing fallback: rewrite everything to bot.js
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -38,7 +281,7 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // Handle REAL JOIN API requests
+  // Handle REAL JOIN API endpoint
   if (req.url && req.url.includes('/api/join') && req.method === 'POST') {
     try {
       const { userId, firstName, activityId, activityName } = req.body || {};
@@ -51,7 +294,7 @@ module.exports = async (req, res) => {
       );
 
       if (existing) {
-        return res.status(200).json({ success: true, alreadyRegistered: true, message: 'Already registered!' });
+        return res.status(200).json({ success: true, alreadyRegistered: true, message: 'You are already registered!' });
       }
 
       global.participationsDB.push({
@@ -62,21 +305,23 @@ module.exports = async (req, res) => {
         registeredAt: new Date().toISOString()
       });
 
-      return res.status(200).json({ success: true, alreadyRegistered: false, message: `✅ Joined ${activityName}!` });
+      return res.status(200).json({ success: true, alreadyRegistered: false, message: `✅ Successfully registered for ${activityName}!` });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
 
-  // Handle Telegram Webhook
-  if (req.method === 'POST' && req.body) {
+  // Handle Telegram Webhook POST updates
+  if (req.method === 'POST') {
     try {
       await bot.handleUpdate(req.body);
     } catch (err) {
-      console.error('Update handling error:', err);
+      console.error('Webhook error:', err);
     }
     return res.status(200).send('OK');
   }
 
-  return res.status(200).json({ status: 'Addis Active Engine Active', tokenConfigured: !!token });
+  // Serve the frontend Mini App directly on GET requests
+  res.setHeader('Content-Type', 'text/html');
+  return res.status(200).send(frontendHtml);
 };
