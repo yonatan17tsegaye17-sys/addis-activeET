@@ -1,7 +1,10 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/bot.js" },
-    { "source": "/((?!api/).*)", "destination": "/public/$1" }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/bot.js" },
+    { "src": "/webhook", "dest": "/bot.js" },
+    { "src": "/(.*\\.(html|css|js|png|jpg|svg))", "dest": "/public/$1" },
+    { "src": "/", "dest": "/public/index.html" },
+    { "src": "/(.*)", "dest": "/bot.js" }
   ]
 }
