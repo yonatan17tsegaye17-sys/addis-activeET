@@ -65,7 +65,7 @@ async function upsertUser(tg) {
       },
       { onConflict: 'telegram_id' }
     )
-    .select('id, first_name, username')
+    .select('id, first_name, username, onboarded_at')
     .single();
   if (error) throw error;
   return data;
@@ -137,7 +137,7 @@ async function bootstrap(req, res) {
     if (pr.error) throw pr.error;
     if (rr.error) throw rr.error;
     const xp = computeXp(pr.data, rr.data);
-    me = { first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
+    me = { onboarded: !!u.onboarded_at, first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
     joined = pr.data.map((x) => x.activity_id);
     records = rr.data;
   }
@@ -237,23 +237,8 @@ async function logActivity(req, res) {
   return json(res, 200, { success: true, message: 'Activity saved.' });
 }
 
-// ---- Telegram bot ----
-bot.start(async (ctx) => {
-  const u = ctx.from || {};
-  try {
-    await upsertUser(u);
-  } catch (e) {
-    console.error('upsert on /start failed', e);
-  }
-  return ctx.reply(
-    `🇪🇹 Welcome to Addis Active, ${u.first_name || 'Explorer'}!\n\nDiscover Addis. Move Addis. Connect Addis.`,
-    {
-      reply_markup: {
-        inline_keyboard: [[{ text: '⚡ OPEN ADDIS ACTIVE APP', web_app: { url: APP_URL } }]]
-      }
-    }
-  );
-});
+// ---- Telegram bot (onboarding lives in onboarding.js) ----
+require('./onboarding')(bot, { supabase, upsertUser, appUrl: APP_URL });
 
 // ---- Entry point ----
 module.exports = async (req, res) => {
