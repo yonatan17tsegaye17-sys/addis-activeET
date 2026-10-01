@@ -1,376 +1,280 @@
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { Telegraf } = require('telegraf');
 const { createClient } = require('@supabase/supabase-js');
 
-const token = process.env.BOT_TOKEN;
-const bot = new Telegraf(token);
+// ---- Env (same names you already use) ----
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const APP_URL = process.env.APP_URL || 'https://addis-active.vercel.app';
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || null; // optional
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const bot = new Telegraf(BOT_TOKEN || 'missing-token');
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false } }
+);
 
-// Telegram /start command
-bot.start(async (ctx) => {
-  const user = ctx.from || {};
-  const firstName = user.first_name || 'Explorer';
-  const lastName = user.last_name || null;
-  const username = user.username || null;
-  const telegramId = user.id;
+let INDEX_HTML = '<h1>Addis Active</h1><p>public/index.html not found.</p>';
+try {
+  INDEX_HTML = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+} catch (e) {
+  console.error('Could not read public/index.html', e);
+}
 
+const ACTIVITY_TYPES = ['RUNNING', 'WALKING', 'CYCLING', 'FOOTBALL', 'HIKING', 'SWIMMING', 'GYM', 'OTHER'];
+const REAL_STATUSES = new Set(['UPCOMING', 'LIVE', 'COMPLETED']); // DEMO/DRAFT give no XP
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ---- Telegram initData validation (server-side) ----
+function verifyInitData(initData) {
+  if (!initData || !BOT_TOKEN) return null;
+  const params = new URLSearchParams(initData);
+  const hash = params.get('hash');
+  if (!hash) return null;
+  params.delete('hash');
+  const dataCheckString = [...params.entries()]
+    .map(([k, v]) => `${k}=${v}`)
+    .sort()
+    .join('\n');
+  const secret = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+  const calc = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
+  const a = Buffer.from(calc, 'hex');
+  const b = Buffer.from(hash, 'hex');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  const authDate = Number(params.get('auth_date') || 0);
+  if (!authDate || Date.now() / 1000 - authDate > 86400) return null; // 24h
   try {
-    const { error } = await supabase
-      .from('users')
-      .upsert({
-        telegram_id: telegramId,
-        first_name: firstName,
-        last_name: lastName,
-        username: username,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'telegram_id' });
+    return JSON.parse(params.get('user'));
+  } catch (e) {
+    return null;
+  }
+}
 
-    if (error) console.error('Supabase user upsert error:', error);
-  } catch (err) {
-    console.error('Database connection error on /start:', err);
+async function upsertUser(tg) {
+  const { data, error } = await supabase
+    .from('users')
+    .upsert(
+      {
+        telegram_id: tg.id,
+        first_name: tg.first_name || null,
+        last_name: tg.last_name || null,
+        username: tg.username || null,
+        photo_url: tg.photo_url || null
+      },
+      { onConflict: 'telegram_id' }
+    )
+    .select('id, first_name, username')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// XP is computed from real rows, never stored or client-supplied.
+function computeXp(participations, records) {
+  let xp = 0;
+  for (const p of participations) {
+    if (p.activities && REAL_STATUSES.has(p.activities.status)) xp += 10;
+  }
+  const perDay = {};
+  for (const r of records) {
+    const day = String(r.performed_at).slice(0, 10);
+    perDay[day] = (perDay[day] || 0) + 1;
+    if (perDay[day] > 3) continue; // manual logs are self-reported: max 3/day count
+    xp += 20 + Math.min(Math.floor(Number(r.distance_km || 0)), 10) * 3;
+  }
+  return xp;
+}
+
+const json = (res, code, body) => {
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(code).json(body);
+};
+
+// ---- GET /api/bootstrap ----
+async function bootstrap(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+
+  const [places, acts, comms] = await Promise.all([
+    supabase
+      .from('places')
+      .select('id,slug,name,area,place_type,description,activity_types,featured,data_status,verification,tags,media:media_id(media_type,url,thumbnail,caption,video_status,is_placeholder)')
+      .neq('verification', 'ARCHIVED')
+      .order('featured', { ascending: false })
+      .order('name'),
+    supabase
+      .from('activities')
+      .select('id,name,description,category,date,time,place_id,community_id,location,status')
+      .neq('status', 'CANCELLED')
+      .order('date', { ascending: true, nullsFirst: false }),
+    supabase
+      .from('communities')
+      .select('id,slug,name,description,activity_type,tagline,schedule,social_links,data_status,verification,primary_place_id')
+      .neq('verification', 'ARCHIVED')
+      .order('name')
+  ]);
+  for (const r of [places, acts, comms]) if (r.error) throw r.error;
+
+  let me = null;
+  let joined = [];
+  let records = [];
+  if (tgUser) {
+    const u = await upsertUser(tgUser);
+    const [pr, rr] = await Promise.all([
+      supabase
+        .from('participations')
+        .select('activity_id,status,activities(status)')
+        .eq('user_id', u.id)
+        .neq('status', 'CANCELLED'),
+      supabase
+        .from('activity_records')
+        .select('id,type,distance_km,duration_seconds,place_id,performed_at')
+        .eq('user_id', u.id)
+        .order('performed_at', { ascending: false })
+        .limit(500)
+    ]);
+    if (pr.error) throw pr.error;
+    if (rr.error) throw rr.error;
+    const xp = computeXp(pr.data, rr.data);
+    me = { first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
+    joined = pr.data.map((x) => x.activity_id);
+    records = rr.data;
   }
 
+  return json(res, 200, {
+    success: true,
+    me,
+    joined,
+    records,
+    places: places.data,
+    activities: acts.data,
+    communities: comms.data
+  });
+}
+
+// ---- POST /api/join ----
+async function join(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to join.' });
+
+  const { activityId } = req.body || {};
+  if (typeof activityId !== 'string' || !UUID_RE.test(activityId)) {
+    return json(res, 400, { success: false, error: 'Invalid activity.' });
+  }
+
+  const user = await upsertUser(tgUser);
+  const { data: act, error: actErr } = await supabase
+    .from('activities')
+    .select('id,name,status')
+    .eq('id', activityId)
+    .maybeSingle();
+  if (actErr) throw actErr;
+  if (!act) return json(res, 404, { success: false, error: 'Activity not found.' });
+  if (act.status === 'CANCELLED' || act.status === 'COMPLETED') {
+    return json(res, 409, { success: false, error: 'This activity is no longer open.' });
+  }
+
+  const { error } = await supabase
+    .from('participations')
+    .insert({ user_id: user.id, activity_id: act.id, status: 'JOINED' });
+
+  if (error) {
+    if (error.code === '23505') return json(res, 200, { success: true, message: `You already joined ${act.name}.` });
+    throw error;
+  }
+  const demo = !REAL_STATUSES.has(act.status);
+  return json(res, 200, {
+    success: true,
+    message: demo
+      ? `Saved: ${act.name}. This is a DEMO activity, not an official event, so it earns no XP.`
+      : `You're in: ${act.name}.`
+  });
+}
+
+// ---- POST /api/log ----
+async function logActivity(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to log activities.' });
+
+  const { type, distanceKm, minutes, placeId, performedAt } = req.body || {};
+  if (!ACTIVITY_TYPES.includes(type)) return json(res, 400, { success: false, error: 'Choose an activity type.' });
+
+  const dist = distanceKm === '' || distanceKm == null ? null : Number(distanceKm);
+  const mins = minutes === '' || minutes == null ? null : Number(minutes);
+  if (dist !== null && (!Number.isFinite(dist) || dist < 0 || dist > 300)) {
+    return json(res, 400, { success: false, error: 'Distance must be between 0 and 300 km.' });
+  }
+  if (mins !== null && (!Number.isFinite(mins) || mins < 1 || mins > 1440)) {
+    return json(res, 400, { success: false, error: 'Duration must be between 1 and 1440 minutes.' });
+  }
+  if (dist === null && mins === null) {
+    return json(res, 400, { success: false, error: 'Enter a distance or a duration.' });
+  }
+
+  let when = new Date();
+  if (performedAt) {
+    const d = new Date(performedAt);
+    const now = Date.now();
+    if (isNaN(d) || d.getTime() > now + 5 * 60 * 1000 || d.getTime() < now - 30 * 86400 * 1000) {
+      return json(res, 400, { success: false, error: 'Date must be within the last 30 days.' });
+    }
+    when = d;
+  }
+  if (placeId && !UUID_RE.test(placeId)) return json(res, 400, { success: false, error: 'Invalid place.' });
+
+  const user = await upsertUser(tgUser);
+  const { error } = await supabase.from('activity_records').insert({
+    user_id: user.id,
+    place_id: placeId || null,
+    type,
+    distance_km: dist,
+    duration_seconds: mins === null ? null : Math.round(mins * 60),
+    source: 'manual',
+    performed_at: when.toISOString()
+  });
+  if (error) throw error;
+  return json(res, 200, { success: true, message: 'Activity saved.' });
+}
+
+// ---- Telegram bot ----
+bot.start(async (ctx) => {
+  const u = ctx.from || {};
+  try {
+    await upsertUser(u);
+  } catch (e) {
+    console.error('upsert on /start failed', e);
+  }
   return ctx.reply(
-    `🇪🇹 Welcome to Addis Active, ${firstName}!\n\nMovement connects Addis Ababa. Discover routes, join communities, and track your progress.`,
+    `🇪🇹 Welcome to Addis Active, ${u.first_name || 'Explorer'}!\n\nDiscover Addis. Move Addis. Connect Addis.`,
     {
       reply_markup: {
-        inline_keyboard: [
-          [{ text: "⚡ OPEN ADDIS ACTIVE APP", web_app: { url: "https://addis-active.vercel.app" } }]
-        ]
+        inline_keyboard: [[{ text: '⚡ OPEN ADDIS ACTIVE APP', web_app: { url: APP_URL } }]]
       }
     }
   );
 });
 
-// Embedded Frontend HTML with Real Database API hooks
-const frontendHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Addis Active</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-base: #0f172a;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --accent-yellow: #facc15;
-            --accent-blue: #38bdf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 90px;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .app-topbar {
-            background: var(--card-bg);
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .app-topbar h1 {
-            margin: 0;
-            font-size: 16px;
-            color: var(--accent-yellow);
-        }
-        .xp-pill {
-            background: #0f172a;
-            border: 1px solid var(--border-color);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: #34d399;
-            font-weight: bold;
-        }
-        .screen {
-            display: none;
-            padding: 16px;
-        }
-        .screen.active {
-            display: block;
-        }
-        .module-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 16px;
-        }
-        .module-card h3 {
-            margin: 0 0 6px 0;
-            font-size: 18px;
-            color: var(--accent-blue);
-        }
-        .module-card p {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin: 0 0 14px 0;
-            line-height: 1.4;
-        }
-        .action-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-        }
-        .action-btn:active {
-            background: #1d4ed8;
-        }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 1000;
-        }
-        .nav-tab {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 10px;
-            cursor: pointer;
-            flex: 1;
-            font-weight: bold;
-        }
-        .nav-tab.active {
-            color: var(--accent-blue);
-        }
-        .nav-icon {
-            font-size: 16px;
-            margin-bottom: 2px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="app-topbar">
-        <h1 id="welcome-header">🇪🇹 Addis Active</h1>
-        <div class="xp-pill" id="user-xp">LVL 1 • 50 XP</div>
-    </div>
-
-    <!-- SCREEN 1: HOME -->
-    <div id="screen-home" class="screen active">
-        <div class="module-card" style="background: linear-gradient(135deg, #1e3a8a, #0f172a);">
-            <div style="font-size: 11px; color: var(--accent-yellow); font-weight: bold; margin-bottom: 4px;">📍 ADDIS ABABA • 2,355M ALTITUDE</div>
-            <h2 id="user-greeting" style="margin: 0 0 6px 0; font-size: 20px;">Welcome, Explorer</h2>
-            <p style="color: #cbd5e1; margin-bottom: 14px;">Movement connects Addis Ababa. What is your move today?</p>
-        </div>
-
-        <div class="module-card">
-            <h3>Featured: Entoto Bertusew Run</h3>
-            <p>📍 Entoto Park • 5KM Trail<br>Breathe fresh mountain air and connect with the community at the peak.</p>
-            <button class="action-btn" onclick="realJoin('b1f89342-1111-4444-8888-000000000001', 'Entoto Bertusew Run')">JOIN BERTUSEW RUN</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 2: EXPLORE -->
-    <div id="screen-explore" class="screen">
-        <div class="module-card">
-            <h3>Meskel Square Urban Jog</h3>
-            <p>📍 City Center • 4KM Sunset Route<br>Explore historical monuments and urban corridors.</p>
-            <button class="action-btn" onclick="realJoin('b1f89342-1111-4444-8888-000000000002', 'Meskel Square Urban Jog')">JOIN MESKEL JOG</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 3: TRACK -->
-    <div id="screen-track" class="screen">
-        <div class="module-card" style="text-align: center;">
-            <h3>Live GPS Tracker</h3>
-            <p>Telemetry engine active for tracking movement paths across Addis.</p>
-            <button class="action-btn" onclick="alert('Manual activity logger coming up next!')">Log Manual Activity</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 4: COMMUNITY -->
-    <div id="screen-community" class="screen">
-        <div class="module-card">
-            <h3>Bertusew Running Club</h3>
-            <p>📅 Sundays at 6:30 AM<br>📍 Entoto Park Gate 1<br>Dedicated community of high-altitude runners.</p>
-            <button class="action-btn" onclick="alert('Community network layer active.')">View Community</button>
-        </div>
-    </div>
-
-    <!-- SCREEN 5: PULSE -->
-    <div id="screen-pulse" class="screen">
-        <div class="module-card">
-            <h3>City Air & Energy Pulse</h3>
-            <p>🟢 Bole Air Quality: Pristine (AQI 22)<br>🔥 Entoto Peak: High Energy (140+ Active Runners)</p>
-        </div>
-    </div>
-
-    <!-- SCREEN 6: JOURNEY -->
-    <div id="screen-journey" class="screen">
-        <div class="module-card">
-            <h3>Athlete Dashboard</h3>
-            <p>Status: <strong style="color: var(--accent-yellow);">Connected to Supabase DB</strong></p>
-            <p>Current Rank: <strong style="color: #34d399;">Level 1 Explorer</strong></p>
-        </div>
-    </div>
-
-    <!-- BOTTOM NAVIGATION -->
-    <div class="bottom-nav">
-        <div class="nav-tab active" onclick="switchView('home', this)"><div class="nav-icon">🏠</div>Home</div>
-        <div class="nav-tab" onclick="switchView('explore', this)"><div class="nav-icon">🗺️</div>Explore</div>
-        <div class="nav-tab" onclick="switchView('track', this)"><div class="nav-icon">⚡</div>Track</div>
-        <div class="nav-tab" onclick="switchView('community', this)"><div class="nav-icon">👥</div>Community</div>
-        <div class="nav-tab" onclick="switchView('pulse', this)"><div class="nav-icon">🏛️</div>Pulse</div>
-        <div class="nav-tab" onclick="switchView('journey', this)"><div class="nav-icon">👤</div>Journey</div>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const telegramUser = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : { id: 999999, first_name: "Explorer" };
-        document.getElementById('user-greeting').innerText = \`Welcome, \${telegramUser.first_name}\`;
-        document.getElementById('welcome-header').innerText = \`🇪🇹 Addis Active (\${telegramUser.first_name})\`;
-
-        function switchView(screenId, element) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('screen-' + screenId).classList.add('active');
-            element.classList.add('active');
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-        }
-
-        async function realJoin(activityId, activityName) {
-            try {
-                const response = await fetch('/api/join', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: telegramUser.id,
-                        firstName: telegramUser.first_name,
-                        username: telegramUser.username || null,
-                        activityId: activityId,
-                        activityName: activityName
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert(data.message);
-                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (err) {
-                alert('Network error connecting to database API.');
-            }
-        }
-    </script>
-</body>
-</html>`;
-
+// ---- Entry point ----
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const p = new URL(req.url, 'http://localhost').pathname;
+  try {
+    if (p === '/api/bootstrap' && req.method === 'GET') return await bootstrap(req, res);
+    if (p === '/api/join' && req.method === 'POST') return await join(req, res);
+    if (p === '/api/log' && req.method === 'POST') return await logActivity(req, res);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // Handle REAL JOIN API endpoint -> Writes to Supabase
-  if (req.url && req.url.includes('/api/join') && req.method === 'POST') {
-    try {
-      const { userId, firstName, username, activityId, activityName } = req.body || {};
-      if (!userId || !activityId) {
-        return res.status(400).json({ success: false, error: 'Missing user or activity data.' });
+    if (req.method === 'POST') {
+      if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
+        return res.status(401).send('Unauthorized');
       }
-
-      let { data: dbUser, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('telegram_id', userId)
-        .single();
-
-      if (!dbUser) {
-        const { data: newUser, error: createError } = await supabase
-          .from('users')
-          .insert({
-            telegram_id: userId,
-            first_name: firstName,
-            username: username
-          })
-          .select('id')
-          .single();
-
-        if (createError) return res.status(500).json({ success: false, error: createError.message });
-        dbUser = newUser;
-      }
-
-      // Ensure activity exists (fallback seed check)
-      let { data: dbActivity } = await supabase
-        .from('activities')
-        .select('id')
-        .eq('id', activityId)
-        .single();
-
-      if (!dbActivity) {
-        await supabase.from('activities').insert({
-          id: activityId,
-          name: activityName,
-          category: 'RUNNING',
-          status: 'UPCOMING'
-        });
-      }
-
-      // Insert participation record
-      const { error: partError } = await supabase
-        .from('participations')
-        .insert({
-          user_id: dbUser.id,
-          activity_id: activityId,
-          status: 'JOINED'
-        });
-
-      if (partError) {
-        if (partError.code === '23505') {
-          return res.status(200).json({ success: true, message: `You are already registered for ${activityName}!` });
-        }
-        return res.status(500).json({ success: false, error: partError.message });
-      }
-
-      return res.status(200).json({ success: true, message: `✅ Successfully registered for ${activityName} and saved to Supabase!` });
-    } catch (err) {
-      return res.status(500).json({ success: false, error: err.message });
-    }
-  }
-
-  if (req.method === 'POST') {
-    try {
       await bot.handleUpdate(req.body);
-    } catch (err) {
-      console.error('Webhook error:', err);
+      return res.status(200).send('OK');
     }
-    return res.status(200).send('OK');
-  }
 
-  res.setHeader('Content-Type', 'text/html');
-  return res.status(200).send(frontendHtml);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(INDEX_HTML);
+  } catch (err) {
+    console.error('Handler error:', err);
+    return json(res, 500, { success: false, error: 'Something went wrong. Please try again.' });
+  }
 };
