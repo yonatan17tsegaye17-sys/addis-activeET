@@ -1,243 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Addis Active</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-base: #0f172a;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --accent-yellow: #facc15;
-            --accent-blue: #38bdf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 90px;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .app-topbar {
-            background: var(--card-bg);
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .app-topbar h1 {
-            margin: 0;
-            font-size: 16px;
-            color: var(--accent-yellow);
-        }
-        .xp-pill {
-            background: #0f172a;
-            border: 1px solid var(--border-color);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: #34d399;
-            font-weight: bold;
-        }
-        .screen {
-            display: none;
-            padding: 16px;
-        }
-        .screen.active {
-            display: block;
-        }
-        .module-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 16px;
-        }
-        .module-card h3 {
-            margin: 0 0 6px 0;
-            font-size: 18px;
-            color: var(--accent-blue);
-        }
-        .module-card p {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin: 0 0 14px 0;
-            line-height: 1.4;
-        }
-        .action-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-        }
-        .action-btn:active {
-            background: #1d4ed8;
-        }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 1000;
-        }
-        .nav-tab {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 10px;
-            cursor: pointer;
-            flex: 1;
-            font-weight: bold;
-        }
-        .nav-tab.active {
-            color: var(--accent-blue);
-        }
-        .nav-icon {
-            font-size: 16px;
-            margin-bottom: 2px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Addis Active</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--line:#334155;--yellow:#facc15;--blue:#38bdf8;--text:#f8fafc;--muted:#94a3b8;--green:#34d399}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding-bottom:90px;-webkit-tap-highlight-color:transparent}
+.top{background:var(--card);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.top h1{margin:0;font-size:16px;color:var(--yellow)}
+.pill{background:var(--bg);border:1px solid var(--line);padding:4px 10px;border-radius:12px;font-size:11px;color:var(--green);font-weight:700}
+#view{padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.card h3{margin:0 0 6px;font-size:18px;color:var(--blue)}
+.card p{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.45}
+.hero{background:linear-gradient(135deg,#1e3a8a,#0f172a)}
+.eyebrow{font-size:11px;color:var(--yellow);font-weight:700;margin-bottom:4px;letter-spacing:.5px}
+.sec{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin:20px 2px 8px}
+.btn{background:#2563eb;color:#fff;border:0;width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+.btn:active{background:#1d4ed8}.btn[disabled]{background:#334155;color:var(--green)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--blue)}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-right:6px;border:1px solid var(--line);color:var(--muted)}
+.badge.demo{color:#fbbf24;border-color:#78560f}.badge.ok{color:var(--green);border-color:#14614a}
+.media{width:100%;height:150px;border-radius:12px;margin-bottom:12px;background:linear-gradient(135deg,#14532d,#1e3a8a);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+video.media{height:auto}
+.play{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:18px}
+.mt{font-size:11px;font-weight:700;margin-top:8px;letter-spacing:.5px}.ms{font-size:11px;color:#cbd5e1}
+input,select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px;margin-bottom:10px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}
+.chip{flex:none;padding:6px 12px;border-radius:14px;border:1px solid var(--line);font-size:12px;color:var(--muted);cursor:pointer}
+.chip.on{background:var(--blue);color:#0f172a;border-color:var(--blue);font-weight:700}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.row:last-child{border:0}.muted{color:var(--muted)}
+.item{cursor:pointer}
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:10px 0 14px;z-index:1000}
+.tab{flex:1;text-align:center;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer}
+.tab.on{color:var(--blue)}.tab i{display:block;font-style:normal;font-size:16px;margin-bottom:2px}
+#sheet{position:fixed;inset:0;background:var(--bg);z-index:2000;overflow-y:auto;padding:16px 16px 40px;display:none}
+#toast{position:fixed;left:16px;right:16px;bottom:100px;background:#0b1220;border:1px solid var(--line);padding:12px;border-radius:12px;font-size:13px;z-index:3000;display:none}
+.lock{opacity:.4}
+</style>
 </head>
 <body>
+<div class="top"><h1>🇪🇹 Addis Active</h1><div class="pill" id="xp">…</div></div>
+<div id="view"><div class="card"><p>Loading Addis…</p></div></div>
+<div id="sheet"></div>
+<div id="toast"></div>
+<div class="nav" id="nav"></div>
 
-    <div class="app-topbar">
-        <h1 id="welcome-header">🇪🇹 Addis Active</h1>
-        <div class="xp-pill" id="user-xp">LVL 1 • 50 XP</div>
-    </div>
+<script>
+const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
+const S = {me:null,places:[],activities:[],communities:[],joined:new Set(),records:[],tab:'home',q:'',type:'ALL',err:null};
+const TABS=[['home','🏠','Home'],['explore','🗺️','Explore'],['track','⚡','Track'],['community','👥','Community'],['pulse','🏛️','Pulse'],['journey','👤','Journey']];
+const PT={PARK:'Park',ROUTE:'Route',FACILITY:'Facility',ACTIVITY_AREA:'Activity area',COMMUNITY_LOCATION:'Community location',EVENT_LOCATION:'Event location'};
+const AT=['RUNNING','WALKING','CYCLING','FOOTBALL','HIKING','SWIMMING','GYM','OTHER'];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap=s=>s?s.charAt(0)+s.slice(1).toLowerCase():'';
 
-    <!-- SCREEN 1: HOME -->
-    <div id="screen-home" class="screen active">
-        <div class="module-card" style="background: linear-gradient(135deg, #1e3a8a, #0f172a);">
-            <div style="font-size: 11px; color: var(--accent-yellow); font-weight: bold; margin-bottom: 4px;">📍 ADDIS ABABA • 2,355M ALTITUDE</div>
-            <h2 id="user-greeting" style="margin: 0 0 6px 0; font-size: 20px;">Welcome, Explorer</h2>
-            <p style="color: #cbd5e1; margin-bottom: 14px;">Movement connects Addis Ababa. What is your move today?</p>
-        </div>
+async function api(path,body){
+  const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-telegram-init-data':tg.initData||''},body:body?JSON.stringify(body):undefined});
+  return r.json();
+}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',3500)}
 
-        <div class="module-card">
-            <h3>Featured: Entoto Bertusew Run</h3>
-            <p>📍 Entoto Park • 5KM Trail<br>Breathe fresh mountain air and connect with the community at the peak.</p>
-            <button class="action-btn" onclick="realJoin('act_bertusew_01', 'Entoto Bertusew Run')">JOIN BERTUSEW RUN</button>
-        </div>
-    </div>
+async function refresh(){
+  try{
+    const d=await api('/api/bootstrap');
+    if(!d.success) throw new Error(d.error||'Load failed');
+    Object.assign(S,{me:d.me,places:d.places,activities:d.activities,communities:d.communities,records:d.records,joined:new Set(d.joined),err:null});
+  }catch(e){S.err=e.message}
+  render();
+}
 
-    <!-- SCREEN 2: EXPLORE HUB -->
-    <div id="screen-explore" class="screen">
-        <div class="module-card">
-            <h3>Meskel Square Urban Jog</h3>
-            <p>📍 City Center • 4KM Sunset Route<br>Explore historical monuments and urban corridors.</p>
-            <button class="action-btn" onclick="realJoin('act_meskel_01', 'Meskel Square Urban Jog')">JOIN MESKEL JOG</button>
-        </div>
-    </div>
+/* ---------- helpers ---------- */
+const placeById=id=>S.places.find(p=>p.id===id);
+const commById=id=>S.communities.find(c=>c.id===id);
+function actBadge(st){
+  if(st==='DEMO'||st==='DRAFT')return `<span class="badge demo">${st}</span>`;
+  if(st==='LIVE'||st==='UPCOMING')return `<span class="badge ok">${st}</span>`;
+  return `<span class="badge">${esc(st)}</span>`;
+}
+function dataBadge(ds){
+  if(ds==='VERIFIED')return '<span class="badge ok">VERIFIED</span>';
+  if(ds==='TO_BE_VERIFIED')return '<span class="badge">TO BE VERIFIED</span>';
+  if(ds==='DEMO')return '<span class="badge demo">DEMO</span>';
+  return `<span class="badge">${esc(ds)}</span>`;
+}
+// Image now, video later: same component, driven by media_type/video_status.
+function media(m){
+  if(m&&m.media_type==='video'&&m.video_status==='video_available'&&m.url)
+    return `<video class="media" src="${esc(m.url)}" poster="${esc(m.thumbnail||'')}" controls playsinline></video>`;
+  const bg=m&&m.thumbnail?`background-image:url('${esc(m.thumbnail)}')`:'';
+  return `<div class="media" style="${bg}"><div class="play">▶</div><div class="mt">EXPLORE THIS PLACE</div><div class="ms">Video coming soon</div></div>`;
+}
+function when(a){
+  if(!a.date)return 'Date to be announced';
+  return esc(a.date)+(a.time?' · '+esc(String(a.time).slice(0,5)):'');
+}
+function actCard(a){
+  const pl=a.place_id?placeById(a.place_id):null, cm=a.community_id?commById(a.community_id):null, done=S.joined.has(a.id);
+  return `<div class="card"><div>${actBadge(a.status)}<span class="badge">${esc(cap(a.category))}</span></div>
+  <h3 style="margin-top:8px">${esc(a.name)}</h3>
+  <p>📅 ${when(a)}${pl?`<br>📍 ${esc(pl.name)}`:''}${cm?`<br>👥 ${esc(cm.name)}`:''}${a.description?`<br>${esc(a.description)}`:''}</p>
+  <button class="btn" data-join="${a.id}" ${done?'disabled':''}>${done?'JOINED ✓':'JOIN'}</button></div>`;
+}
 
-    <!-- SCREEN 3: TRACKER -->
-    <div id="screen-track" class="screen">
-        <div class="module-card" style="text-align: center;">
-            <h3>Live GPS Tracker</h3>
-            <p>Telemetry engine active for tracking movement paths across Addis.</p>
-            <button class="action-btn" onclick="alert('Manual activity logger coming up next!')">Log Manual Activity</button>
-        </div>
-    </div>
+/* ---------- screens ---------- */
+function home(){
+  const h=new Date().getHours(), g=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const name=S.me?.first_name||tg.initDataUnsafe?.user?.first_name;
+  const next=S.activities.find(a=>a.status==='LIVE'||a.status==='UPCOMING')||S.activities[0];
+  const feat=S.places.find(p=>p.featured)||S.places[0];
+  const days=new Set(S.records.map(r=>String(r.performed_at).slice(0,10))).size;
+  let o=`<div class="card hero"><div class="eyebrow">📍 ADDIS ABABA</div><h2 style="margin:0 0 6px;font-size:20px">${g}${name?', '+esc(name):''}</h2>
+  <p style="color:#cbd5e1;margin:0">DISCOVER ADDIS · MOVE ADDIS · CONNECT ADDIS</p></div>`;
+  if(!S.me&&!S.err)o+=`<div class="card"><p style="margin:0">Open Addis Active from Telegram to join activities and track your moves.</p></div>`;
+  o+=`<div class="sec">YOUR NEXT MOVE</div>`+(next?actCard(next):`<div class="card"><p style="margin:0">No activities yet.</p></div>`);
+  o+=`<div class="sec">YOUR GOAL</div><div class="card"><h3>What do you want to achieve?</h3><p style="margin:0">Goals are coming soon.</p></div>`;
+  if(feat)o+=`<div class="sec">EXPLORE ADDIS</div><div class="card item" data-place="${feat.id}">${media(feat.media)}<h3>${esc(feat.name)}</h3><p style="margin:0">${esc(PT[feat.place_type]||'')}${feat.area?' · '+esc(feat.area):''}</p></div>`;
+  const nearC=S.communities[0];
+  if(nearC)o+=`<div class="sec">COMMUNITY</div><div class="card item" data-comm="${nearC.id}"><h3>${esc(nearC.name)}</h3><p style="margin:0">View community</p></div>`;
+  o+=`<div class="sec">YOUR PROGRESS</div><div class="card">`+(S.records.length||S.joined.size
+    ?`<div class="row"><span>Logged activities</span><b>${S.records.length}</b></div><div class="row"><span>Joined activities</span><b>${S.joined.size}</b></div><div class="row"><span>Active days</span><b>${days}</b></div>`
+    :`<p style="margin:0">Start your first activity.</p>`)+`</div>`;
+  return o;
+}
 
-    <!-- SCREEN 4: COMMUNITY -->
-    <div id="screen-community" class="screen">
-        <div class="module-card">
-            <h3>Bertusew Running Club</h3>
-            <p>📅 Sundays at 6:30 AM<br>📍 Entoto Park Gate 1<br>Dedicated community of high-altitude runners.</p>
-            <button class="action-btn" onclick="alert('Community network layer active.')">View Community</button>
-        </div>
-    </div>
+function explore(){
+  const chips=['ALL',...Object.keys(PT)].map(t=>`<div class="chip ${S.type===t?'on':''}" data-type="${t}">${t==='ALL'?'All':PT[t]}</div>`).join('');
+  return `<input id="q" placeholder="Search places, activities, communities" value="${esc(S.q)}" autocomplete="off"><div class="chips">${chips}</div><div id="results"></div>`;
+}
+function results(){
+  const q=S.q.trim().toLowerCase(), hit=(...f)=>!q||f.some(x=>String(x||'').toLowerCase().includes(q));
+  const pl=S.places.filter(p=>(S.type==='ALL'||p.place_type===S.type)&&hit(p.name,p.area,PT[p.place_type],(p.tags||[]).join(' '),(p.activity_types||[]).join(' ')));
+  const ac=q?S.activities.filter(a=>hit(a.name,a.category,a.description)):[];
+  const cm=q?S.communities.filter(c=>hit(c.name,c.activity_type,c.tagline)):[];
+  let o='';
+  if(pl.length)o+=`<div class="sec">PLACES</div><div class="card">`+pl.map(p=>`<div class="row item" data-place="${p.id}"><span><b>${esc(p.name)}</b><br><span class="muted">${esc(PT[p.place_type]||'')}${p.area?' · '+esc(p.area):''}</span></span>${dataBadge(p.data_status)}</div>`).join('')+`</div>`;
+  if(ac.length)o+=`<div class="sec">ACTIVITIES</div>`+ac.map(actCard).join('');
+  if(cm.length)o+=`<div class="sec">COMMUNITIES</div><div class="card">`+cm.map(c=>`<div class="row item" data-comm="${c.id}"><b>${esc(c.name)}</b>${dataBadge(c.data_status)}</div>`).join('')+`</div>`;
+  $('results').innerHTML=o||`<div class="card"><p style="margin:0">Nothing found. Try another word.</p></div>`;
+}
 
-    <!-- SCREEN 5: PULSE -->
-    <div id="screen-pulse" class="screen">
-        <div class="module-card">
-            <h3>City Air & Energy Pulse</h3>
-            <p>🟢 Bole Air Quality: Pristine (AQI 22)<br>🔥 Entoto Peak: High Energy (140+ Active Runners)</p>
-        </div>
-    </div>
+function community(){
+  if(!S.communities.length)return `<div class="card"><p style="margin:0">Find people who move like you.</p></div>`;
+  return S.communities.map(c=>`<div class="card item" data-comm="${c.id}">${dataBadge(c.data_status)}<h3 style="margin-top:8px">${esc(c.name)}</h3><p style="margin:0">${esc(c.tagline||'Information to be verified')}</p></div>`).join('');
+}
 
-    <!-- SCREEN 6: JOURNEY -->
-    <div id="screen-journey" class="screen">
-        <div class="module-card">
-            <h3>Athlete Dashboard</h3>
-            <p>Registered Activities: <strong id="reg-count" style="color: #fff;">0</strong></p>
-            <p>Current Rank: <strong style="color: var(--accent-yellow);">Level 1 Explorer</strong></p>
-        </div>
-    </div>
+function track(){
+  const opts=AT.map(t=>`<option value="${t}">${cap(t)}</option>`).join('');
+  const pls=S.places.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  let o=`<div class="card"><h3>Log an activity</h3><p>Manual log. Entries are self-reported.</p>
+  <select id="l-type">${opts}</select>
+  <input id="l-dist" type="number" inputmode="decimal" step="0.1" min="0" placeholder="Distance (km)">
+  <input id="l-min" type="number" inputmode="numeric" min="1" placeholder="Duration (minutes)">
+  <select id="l-place"><option value="">Where? (optional)</option>${pls}</select>
+  <button class="btn" id="l-save">SAVE ACTIVITY</button></div><div class="sec">MY ACTIVITIES</div>`;
+  if(!S.records.length)return o+`<div class="card"><p style="margin:0">Start your first activity.</p></div>`;
+  return o+`<div class="card">`+S.records.slice(0,30).map(r=>{
+    const m=r.duration_seconds?Math.round(r.duration_seconds/60)+' min':'';
+    const d=r.distance_km!=null?Number(r.distance_km)+' km':'';
+    const pl=r.place_id&&placeById(r.place_id);
+    return `<div class="row"><span><b>${esc(cap(r.type))}</b><br><span class="muted">${[d,m].filter(Boolean).join(' · ')}${pl?' · '+esc(pl.name):''}</span></span><span class="muted">${new Date(r.performed_at).toLocaleDateString()}</span></div>`}).join('')+`</div>`;
+}
 
-    <!-- BOTTOM NAVIGATION -->
-    <div class="bottom-nav">
-        <div class="nav-tab active" onclick="switchView('home', this)"><div class="nav-icon">🏠</div>Home</div>
-        <div class="nav-tab" onclick="switchView('explore', this)"><div class="nav-icon">🗺️</div>Explore</div>
-        <div class="nav-tab" onclick="switchView('track', this)"><div class="nav-icon">⚡</div>Track</div>
-        <div class="nav-tab" onclick="switchView('community', this)"><div class="nav-icon">👥</div>Community</div>
-        <div class="nav-tab" onclick="switchView('pulse', this)"><div class="nav-icon">🏛️</div>Pulse</div>
-        <div class="nav-tab" onclick="switchView('journey', this)"><div class="nav-icon">👤</div>Journey</div>
-    </div>
+function pulse(){return `<div class="card"><h3>City Pulse</h3><p style="margin:0">Coming soon. We'll only show live city data once we have a reliable source.</p></div>`}
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+function journey(){
+  if(!S.me)return `<div class="card"><p style="margin:0">Open Addis Active from Telegram to see your journey.</p></div>`;
+  const has=t=>S.records.some(r=>r.type===t);
+  const explored=new Set(S.records.filter(r=>r.place_id).map(r=>r.place_id)).size;
+  const B=[['First Move',S.records.length>0],['First Run',has('RUNNING')],['First Walk',has('WALKING')],['First Ride',has('CYCLING')],['Addis Explorer (3 places)',explored>=3]];
+  const mine=S.activities.filter(a=>S.joined.has(a.id));
+  let o=`<div class="card hero"><h2 style="margin:0 0 4px">${esc(S.me.first_name||'Explorer')}</h2><p style="margin:0;color:#cbd5e1">${S.me.username?'@'+esc(S.me.username)+' · ':''}Level ${S.me.level} · ${S.me.xp} XP</p></div>`;
+  o+=`<div class="sec">BADGES</div><div class="card">`+B.map(([n,ok])=>`<div class="row ${ok?'':'lock'}"><span>${ok?'🏅':'🔒'} ${n}</span></div>`).join('')+`</div>`;
+  o+=`<div class="sec">EXPLORED</div><div class="card"><p style="margin:0">${explored?explored+' Addis location'+(explored>1?'s':'')+' logged':'Start exploring Addis.'}</p></div>`;
+  o+=`<div class="sec">JOINED ACTIVITIES</div>`+(mine.length?`<div class="card">`+mine.map(a=>`<div class="row"><b>${esc(a.name)}</b>${actBadge(a.status)}</div>`).join('')+`</div>`:`<div class="card"><p style="margin:0">Your journey starts here.</p></div>`);
+  return o;
+}
 
-        // Extract real Telegram User Context
-        const telegramUser = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : { id: 999999, first_name: "Explorer" };
-        
-        document.getElementById('user-greeting').innerText = `Welcome, ${telegramUser.first_name}`;
-        document.getElementById('welcome-header').innerText = `🇪🇹 Addis Active (${telegramUser.first_name})`;
+/* ---------- sheets (place / community detail) ---------- */
+function openSheet(html){const s=$('sheet');s.innerHTML=`<button class="btn ghost" data-close style="margin-bottom:14px">← Back</button>`+html;s.style.display='block';s.scrollTop=0}
+function closeSheet(){$('sheet').style.display='none'}
+function placeSheet(id){
+  const p=placeById(id); if(!p)return;
+  const acts=S.activities.filter(a=>a.place_id===id), cms=S.communities.filter(c=>c.primary_place_id===id);
+  openSheet(`${media(p.media)}<div>${dataBadge(p.data_status)}<span class="badge">${esc(PT[p.place_type]||'')}</span></div>
+  <h2 style="margin:8px 0 4px">${esc(p.name)}</h2><p class="muted" style="margin:0 0 10px">${p.area?esc(p.area)+', ':''}${esc('Addis Ababa')}</p>
+  <div class="card"><p style="margin:0">${esc(p.description||'Information to be verified')}</p></div>
+  <div class="card"><div class="row"><span>Activities</span><span>${(p.activity_types||[]).map(cap).join(', ')||'—'}</span></div>
+  <div class="row"><span>Distance</span><span>Explore route</span></div>
+  <div class="row"><span>Address / access</span><span>${p.data_status==='VERIFIED'?'—':'Information to be verified'}</span></div></div>
+  ${acts.length?`<div class="sec">ACTIVITIES HERE</div>`+acts.map(actCard).join(''):''}
+  ${cms.length?`<div class="sec">COMMUNITIES</div><div class="card">`+cms.map(c=>`<div class="row item" data-comm="${c.id}"><b>${esc(c.name)}</b></div>`).join('')+`</div>`:''}`);
+}
+function commSheet(id){
+  const c=commById(id); if(!c)return;
+  const acts=S.activities.filter(a=>a.community_id===id);
+  openSheet(`<div>${dataBadge(c.data_status)}${c.activity_type?`<span class="badge">${esc(cap(c.activity_type))}</span>`:''}</div>
+  <h2 style="margin:8px 0 4px">${esc(c.name)}</h2><p class="muted" style="margin:0 0 10px">${esc(c.tagline||'')}</p>
+  <div class="card"><p style="margin:0">${esc(c.description||'Information to be verified')}</p></div>
+  <div class="card"><div class="row"><span>Schedule</span><span>${esc(c.schedule||'Information to be verified')}</span></div>
+  <div class="row"><span>Organizers</span><span>Information to be verified</span></div></div>
+  ${acts.length?`<div class="sec">ACTIVITIES</div>`+acts.map(actCard).join(''):''}`);
+}
 
-        function switchView(screenId, element) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('screen-' + screenId).classList.add('active');
-            element.classList.add('active');
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-        }
+/* ---------- render + events ---------- */
+function render(){
+  $('xp').textContent=S.me?`LVL ${S.me.level} • ${S.me.xp} XP`:'Open in Telegram';
+  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
+  if(S.err){$('view').innerHTML=`<div class="card"><h3>Couldn't load</h3><p>${esc(S.err)}</p><button class="btn" data-retry>Try again</button></div>`;return}
+  const f={home,explore,track,community,pulse,journey}[S.tab];
+  $('view').innerHTML=f();
+  if(S.tab==='explore')results();
+}
 
-        // REAL JOIN FUNCTIONALITY CONNECTED TO BACKEND API
-        async function realJoin(activityId, activityName) {
-            try {
-                const response = await fetch('/api/join', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: telegramUser.id,
-                        firstName: telegramUser.first_name,
-                        activityId: activityId,
-                        activityName: activityName
-                    })
-                });
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-tab],[data-join],[data-place],[data-comm],[data-close],[data-type],[data-retry],#l-save');
+  if(!t)return;
+  if(tg.HapticFeedback)tg.HapticFeedback.selectionChanged();
+  if(t.dataset.tab){S.tab=t.dataset.tab;closeSheet();render();window.scrollTo(0,0)}
+  else if(t.dataset.close!==undefined)closeSheet();
+  else if(t.dataset.retry!==undefined)refresh();
+  else if(t.dataset.type){S.type=t.dataset.type;render()}
+  else if(t.dataset.place)placeSheet(t.dataset.place);
+  else if(t.dataset.comm)commSheet(t.dataset.comm);
+  else if(t.dataset.join){
+    t.disabled=true;
+    try{
+      const r=await api('/api/join',{activityId:t.dataset.join});
+      toast(r.success?r.message:(r.error||'Could not join'));
+      if(r.success){S.joined.add(t.dataset.join);await refresh();
+        const open=$('sheet').style.display==='block';if(open)closeSheet();}
+      else t.disabled=false;
+    }catch(_){toast('Network error');t.disabled=false}
+  }
+  else if(t.id==='l-save'){
+    t.disabled=true;
+    try{
+      const r=await api('/api/log',{type:$('l-type').value,distanceKm:$('l-dist').value,minutes:$('l-min').value,placeId:$('l-place').value||null});
+      toast(r.success?r.message:(r.error||'Could not save'));
+      if(r.success){if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');await refresh()}
+      else t.disabled=false;
+    }catch(_){toast('Network error');t.disabled=false}
+  }
+});
+document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;results()}});
 
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(data.message);
-                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (err) {
-                alert('Network error connecting to Addis Active backend.');
-            }
-        }
-    </script>
+refresh();
+</script>
 </body>
 </html>
