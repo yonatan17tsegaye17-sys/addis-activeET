@@ -84,13 +84,12 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Expand Mini App to full screen
+        tg.expand();
 
         function joinRun() {
             document.querySelector('.btn').style.display = 'none';
             document.getElementById('success-msg').style.display = 'block';
             
-            // Optional: Send data back or trigger haptic feedback if available
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
