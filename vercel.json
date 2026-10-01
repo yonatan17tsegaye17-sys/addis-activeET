@@ -1,6 +1,11 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/(.*)", "dest": "/bot.js" }
-  ]
+  "builds": [
+    {
+      "src": "bot.js",
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["public/**"] }
+    }
+  ],
+  "routes": [{ "src": "/(.*)", "dest": "/bot.js" }]
 }
