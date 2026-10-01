@@ -1,22 +1,36 @@
 const { Telegraf } = require('telegraf');
+const { createClient } = require('@supabase/supabase-js');
 
 const token = process.env.BOT_TOKEN;
 const bot = new Telegraf(token);
 
-global.usersDB = global.usersDB || {};
-global.participationsDB = global.participationsDB || [];
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Telegram /start command
 bot.start(async (ctx) => {
   const user = ctx.from || {};
   const firstName = user.first_name || 'Explorer';
-  
-  global.usersDB[user.id] = {
-    id: user.id,
-    firstName: firstName,
-    username: user.username || 'anonymous',
-    joinedAt: new Date().toISOString()
-  };
+  const lastName = user.last_name || null;
+  const username = user.username || null;
+  const telegramId = user.id;
+
+  try {
+    const { error } = await supabase
+      .from('users')
+      .upsert({
+        telegram_id: telegramId,
+        first_name: firstName,
+        last_name: lastName,
+        username: username,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'telegram_id' });
+
+    if (error) console.error('Supabase user upsert error:', error);
+  } catch (err) {
+    console.error('Database connection error on /start:', err);
+  }
 
   return ctx.reply(
     `🇪🇹 Welcome to Addis Active, ${firstName}!\n\nMovement connects Addis Ababa. Discover routes, join communities, and track your progress.`,
@@ -30,7 +44,7 @@ bot.start(async (ctx) => {
   );
 });
 
-// Embedded Frontend HTML to guarantee it loads instantly inside Telegram
+// Embedded Frontend HTML with Real Database API hooks
 const frontendHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -169,7 +183,7 @@ const frontendHtml = `<!DOCTYPE html>
         <div class="module-card">
             <h3>Featured: Entoto Bertusew Run</h3>
             <p>📍 Entoto Park • 5KM Trail<br>Breathe fresh mountain air and connect with the community at the peak.</p>
-            <button class="action-btn" onclick="realJoin('act_bertusew_01', 'Entoto Bertusew Run')">JOIN BERTUSEW RUN</button>
+            <button class="action-btn" onclick="realJoin('b1f89342-1111-4444-8888-000000000001', 'Entoto Bertusew Run')">JOIN BERTUSEW RUN</button>
         </div>
     </div>
 
@@ -178,7 +192,7 @@ const frontendHtml = `<!DOCTYPE html>
         <div class="module-card">
             <h3>Meskel Square Urban Jog</h3>
             <p>📍 City Center • 4KM Sunset Route<br>Explore historical monuments and urban corridors.</p>
-            <button class="action-btn" onclick="realJoin('act_meskel_01', 'Meskel Square Urban Jog')">JOIN MESKEL JOG</button>
+            <button class="action-btn" onclick="realJoin('b1f89342-1111-4444-8888-000000000002', 'Meskel Square Urban Jog')">JOIN MESKEL JOG</button>
         </div>
     </div>
 
@@ -212,8 +226,8 @@ const frontendHtml = `<!DOCTYPE html>
     <div id="screen-journey" class="screen">
         <div class="module-card">
             <h3>Athlete Dashboard</h3>
-            <p>Registered Activities: <strong id="reg-count" style="color: #fff;">0</strong></p>
-            <p>Current Rank: <strong style="color: var(--accent-yellow);">Level 1 Explorer</strong></p>
+            <p>Status: <strong style="color: var(--accent-yellow);">Connected to Supabase DB</strong></p>
+            <p>Current Rank: <strong style="color: #34d399;">Level 1 Explorer</strong></p>
         </div>
     </div>
 
@@ -251,6 +265,7 @@ const frontendHtml = `<!DOCTYPE html>
                     body: JSON.stringify({
                         userId: telegramUser.id,
                         firstName: telegramUser.first_name,
+                        username: telegramUser.username || null,
                         activityId: activityId,
                         activityName: activityName
                     })
@@ -264,14 +279,13 @@ const frontendHtml = `<!DOCTYPE html>
                     alert('Error: ' + data.error);
                 }
             } catch (err) {
-                alert('Network error connecting to backend.');
+                alert('Network error connecting to database API.');
             }
         }
     </script>
 </body>
 </html>`;
 
-// Simplified `vercel.json` routing fallback: rewrite everything to bot.js
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -281,37 +295,73 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // Handle REAL JOIN API endpoint
+  // Handle REAL JOIN API endpoint -> Writes to Supabase
   if (req.url && req.url.includes('/api/join') && req.method === 'POST') {
     try {
-      const { userId, firstName, activityId, activityName } = req.body || {};
+      const { userId, firstName, username, activityId, activityName } = req.body || {};
       if (!userId || !activityId) {
-        return res.status(400).json({ success: false, error: 'Missing data.' });
+        return res.status(400).json({ success: false, error: 'Missing user or activity data.' });
       }
 
-      const existing = global.participationsDB.find(
-        p => p.userId === userId && p.activityId === activityId
-      );
+      let { data: dbUser, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('telegram_id', userId)
+        .single();
 
-      if (existing) {
-        return res.status(200).json({ success: true, alreadyRegistered: true, message: 'You are already registered!' });
+      if (!dbUser) {
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            telegram_id: userId,
+            first_name: firstName,
+            username: username
+          })
+          .select('id')
+          .single();
+
+        if (createError) return res.status(500).json({ success: false, error: createError.message });
+        dbUser = newUser;
       }
 
-      global.participationsDB.push({
-        userId,
-        firstName: firstName || 'Explorer',
-        activityId,
-        activityName,
-        registeredAt: new Date().toISOString()
-      });
+      // Ensure activity exists (fallback seed check)
+      let { data: dbActivity } = await supabase
+        .from('activities')
+        .select('id')
+        .eq('id', activityId)
+        .single();
 
-      return res.status(200).json({ success: true, alreadyRegistered: false, message: `✅ Successfully registered for ${activityName}!` });
+      if (!dbActivity) {
+        await supabase.from('activities').insert({
+          id: activityId,
+          name: activityName,
+          category: 'RUNNING',
+          status: 'UPCOMING'
+        });
+      }
+
+      // Insert participation record
+      const { error: partError } = await supabase
+        .from('participations')
+        .insert({
+          user_id: dbUser.id,
+          activity_id: activityId,
+          status: 'JOINED'
+        });
+
+      if (partError) {
+        if (partError.code === '23505') {
+          return res.status(200).json({ success: true, message: `You are already registered for ${activityName}!` });
+        }
+        return res.status(500).json({ success: false, error: partError.message });
+      }
+
+      return res.status(200).json({ success: true, message: `✅ Successfully registered for ${activityName} and saved to Supabase!` });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
 
-  // Handle Telegram Webhook POST updates
   if (req.method === 'POST') {
     try {
       await bot.handleUpdate(req.body);
@@ -321,7 +371,6 @@ module.exports = async (req, res) => {
     return res.status(200).send('OK');
   }
 
-  // Serve the frontend Mini App directly on GET requests
   res.setHeader('Content-Type', 'text/html');
   return res.status(200).send(frontendHtml);
 };
