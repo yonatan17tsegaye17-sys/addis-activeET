@@ -210,6 +210,7 @@ function commSheet(id){
 
 /* ---------- render + events ---------- */
 function render(){
+  if(!S.signedIn&&!S.err){$('xp').textContent='';$('nav').innerHTML='';$('view').innerHTML=gate();return}
   $('xp').textContent=S.me?`LVL ${S.me.level} • ${S.me.xp} XP`:'Open in Telegram';
   $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
   if(S.err){$('view').innerHTML=`<div class="card"><h3>Couldn't load</h3><p>${esc(S.err)}</p><button class="btn" data-retry>Try again</button></div>`;return}
@@ -249,6 +250,19 @@ document.addEventListener('click',async e=>{
   }
 });
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;results()}});
+
+/* ---------- sign-in gate (shown on every open) ---------- */
+function gate(){
+  const n=esc(S.me?.first_name||'');
+  const top='<div class="card hero"><h2 style="margin:0 0 6px">🇪🇹 Addis Active</h2>';
+  if(!S.me)return top+'<p style="margin:0;color:#cbd5e1">Open this app from Telegram to sign in.</p></div>';
+  if(!S.me.onboarded)return top+`<p style="margin:0 0 14px;color:#cbd5e1">Welcome, ${n}! Answer the 3 quick questions in the bot chat, then reopen the app.</p><button class="btn" data-close-app>GO TO CHAT</button></div>`;
+  return top+`<p style="margin:0 0 14px;color:#cbd5e1">Welcome back, ${n}. Signed in with Telegram.</p><button class="btn" data-signin>CONTINUE</button></div>`;
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-signin]')){S.signedIn=true;render()}
+  else if(e.target.closest('[data-close-app]')){tg.close()}
+});
 
 refresh();
 </script>
