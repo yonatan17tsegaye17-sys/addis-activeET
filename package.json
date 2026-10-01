@@ -1,0 +1,12 @@
+{
+  "name": "addis-active",
+  "version": "1.0.0",
+  "description": "Movement connects Addis Ababa",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3"
+  }
+}
