@@ -11,46 +11,119 @@
             background-color: #0f172a;
             color: #f8fafc;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
         }
         .header {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
         .header h1 {
-            color: #38bdf8;
-            margin: 0 0 8px 0;
-            font-size: 24px;
+            color: #facc15;
+            margin: 0 0 4px 0;
+            font-size: 22px;
         }
         .header p {
             color: #94a3b8;
-            font-size: 14px;
+            font-size: 13px;
             margin: 0;
+        }
+        /* Neighborhood Selector Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+        }
+        .tab {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: #2563eb;
+            color: white;
+            border-color: #3b82f6;
         }
         .card {
             background: #1e293b;
             border-radius: 16px;
-            padding: 20px;
+            padding: 16px;
             margin-bottom: 16px;
             border: 1px solid #334155;
         }
         .card h3 {
-            margin: 0 0 8px 0;
-            font-size: 18px;
+            margin: 0 0 6px 0;
+            font-size: 17px;
+            color: #38bdf8;
         }
         .card p {
             color: #cbd5e1;
-            font-size: 14px;
-            margin: 0 0 16px 0;
+            font-size: 13px;
+            margin: 0 0 12px 0;
+            line-height: 1.4;
+        }
+        /* Video Preview Container */
+        .video-box {
+            background: #0f172a;
+            border-radius: 10px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            border: 1px dashed #475569;
+            color: #94a3b8;
+            font-size: 13px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .video-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        /* Gamification Badges */
+        .badges-section {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .badge {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            flex: 1;
+        }
+        .badge.unlocked {
+            border-color: #10b981;
+            background: #064e3b;
+        }
+        .badge-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .badge-title {
+            font-size: 11px;
+            color: #cbd5e1;
+            font-weight: bold;
         }
         .btn {
             background: #2563eb;
             color: white;
             border: none;
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
         }
@@ -62,24 +135,57 @@
             background: #065f46;
             color: #6ee7b7;
             padding: 12px;
-            border-radius: 8px;
+            border-radius: 10px;
             text-align: center;
-            margin-top: 16px;
+            margin-top: 12px;
             font-weight: bold;
+            font-size: 13px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🇪🇹 Addis Active</h1>
-        <p>Discover & Connect with Addis through Movement</p>
+        <p>Movement Connects Addis Ababa</p>
     </div>
 
-    <div class="card">
+    <!-- 1. Neighborhood Hub Tabs -->
+    <div class="tabs">
+        <div class="tab active" onclick="filterHub('all')">🌟 All Hubs</div>
+        <div class="tab" onclick="filterHub('entoto')">🌲 Entoto Trail</div>
+        <div class="tab" onclick="filterHub('meskel')">🏛️ Meskel Square</div>
+        <div class="tab" onclick="filterHub('bole')">☕ Bole Metro</div>
+    </div>
+
+    <!-- Gamification & Badges Section -->
+    <div class="badges-section">
+        <div class="badge unlocked" id="badge-1">
+            <div class="badge-icon">🏔️</div>
+            <div class="badge-title">Entoto Pioneer</div>
+        </div>
+        <div class="badge" id="badge-2">
+            <div class="badge-icon">⚡</div>
+            <div class="badge-title">10KM Club</div>
+        </div>
+        <div class="badge" id="badge-3">
+            <div class="badge-icon">☕</div>
+            <div class="badge-title">Cafe Perker</div>
+        </div>
+    </div>
+
+    <!-- Event Card with Video Exploration & Fitness Tracker -->
+    <div class="card" data-hub="entoto">
         <h3>Entoto Bertusew Run</h3>
-        <p>📍 Entoto Park<br>🏃‍♂️ Distance: 5KM Morning Trail<br>🌟 Connect with the community at the peak of the city.</p>
-        <button class="btn" onclick="joinRun()">JOIN RUN</button>
-        <div id="success-msg">🎉 You're officially registered for the run!</div>
+        
+        <!-- 2. Video-Based Exploration Preview -->
+        <div class="video-box">
+            <span>🎥 Entoto Trail Preview<br><small>Fresh mountain air & altitude run</small></span>
+        </div>
+
+        <p>📍 <strong>Location:</strong> Entoto Park<br>🏃‍♂️ <strong>Distance:</strong> 5KM Morning Trail<br>🤝 <strong>Impact Perk:</strong> Free post-run traditional coffee at partner local cafes!</p>
+        
+        <button class="btn" onclick="joinRun()">JOIN & LOG MOVEMENT</button>
+        <div id="success-msg">🎉 Registered! +5KM added to your fitness tracker. Badge Unlocked!</div>
     </div>
 
     <script>
@@ -90,9 +196,18 @@
             document.querySelector('.btn').style.display = 'none';
             document.getElementById('success-msg').style.display = 'block';
             
+            // Unlock Badge visually
+            document.getElementById('badge-2').classList.add('unlocked');
+            
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
+        }
+
+        function filterHub(hub) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
         }
     </script>
 </body>
