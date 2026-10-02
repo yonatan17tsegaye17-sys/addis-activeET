@@ -66,6 +66,9 @@ details summary{cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;
 .leaflet-container{background:#0a1020}
 .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.7)}
 .leaflet-control-attribution{background:rgba(10,16,32,.75)!important;color:#8b9ab3!important}.leaflet-control-attribution a{color:#cbd5e1!important}
+.tab{font-size:9.5px}.tab.ex i{width:54px;height:54px;margin:-26px auto 5px}.tab.ex i svg{width:25px;height:25px}
+.tab.ex.ter i{background:linear-gradient(135deg,#f5c518,#d97706);box-shadow:0 8px 22px rgba(245,197,24,.45)}
+#map{height:56vh}
 </style>
 </head>
 <body>
@@ -78,7 +81,7 @@ details summary{cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;
 <script>
 const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
 const S = {me:null,places:[],activities:[],communities:[],joined:new Set(),records:[],tab:'home',q:'',type:'ALL',act:'ALL',err:null};
-const TABS=[['home',`<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,'Home'],['community',`<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></svg>`,'Community'],['explore',`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>`,'Explore'],['track',`<svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>`,'Track'],['journey',`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>`,'Journey']];
+const TABS=[['home',`<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,'Home'],['community',`<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></svg>`,'Community'],['explore',`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>`,'Explore'],['territory',`<svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><circle cx="12" cy="12" r="2.6"/></svg>`,'Territory'],['track',`<svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>`,'Track'],['journey',`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>`,'Journey']];
 const PT={PARK:'Park',ROUTE:'Route',FACILITY:'Facility',ACTIVITY_AREA:'Activity area',COMMUNITY_LOCATION:'Community location',EVENT_LOCATION:'Event location'};
 const ACT={RUNNING:['🏃','Run'],WALKING:['🚶','Walk'],CYCLING:['🚴','Bike'],HIKING:['🥾','Hike'],SWIMMING:['🏊','Swim'],FOOTBALL:['⚽','Football'],STRENGTH:['🏋️','Outdoor strength'],GYM:['💪','Gym'],OTHER:['✨','Other']};
 const AT=Object.keys(ACT);
@@ -245,11 +248,12 @@ function commSheet(id){
 function render(){
   if(!S.signedIn&&!S.err){$('xp').textContent='';$('nav').innerHTML='';$('view').innerHTML=gate();return}
   $('xp').textContent=S.me?`LVL ${S.me.level} • ${S.me.xp} XP`:'Open in Telegram';
-  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''} ${k==='explore'?'ex':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
+  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''} ${k==='explore'?'ex':k==='territory'?'ex ter':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
   if(S.err){$('view').innerHTML=`<div class="card"><h3>Couldn't load</h3><p>${esc(S.err)}</p><button class="btn" data-retry>Try again</button></div>`;return}
-  const f={home,explore,track,community,journey}[S.tab];
+  const f={home,explore,territory,track,community,journey}[S.tab];
   $('view').innerHTML=f();
   if(S.tab==='explore')results();
+  if(S.tab==='territory')setTimeout(initTMap,50);
 }
 
 document.addEventListener('click',async e=>{
@@ -422,9 +426,30 @@ function territoryCard(){
   const n=S.me?.territory||0;
   return `<div class="sec">YOUR TERRITORY</div><div class="card"><h3>${n} zone${n===1?'':'s'} held</h3><p>Move with GPS to claim map zones. Come back on different days and push your pace to hold them.</p><button class="btn" data-map>OPEN TERRITORY MAP</button></div>`;
 }
-function openMap(){
-  openSheet(`<div class="eyebrow">TERRITORY</div><h2 style="margin:0 0 12px">Addis map</h2><div id="map"></div>
-  <div class="card" style="margin-top:14px"><p style="margin:0"><span style="color:var(--gold)">■</span> Yours &nbsp; <span style="color:var(--blue)">■</span> Another mover<br>Each zone is about 275 m wide. The mover with the most points over the last 30 days holds it: 10 points for each day you visit, plus up to 5 for effort. Only GPS moves count.</p></div>`);
+function openMap(){S.tab='territory';closeSheet();render();window.scrollTo(0,0)}
+document.addEventListener('click',e=>{if(e.target.closest('[data-map]'))openMap()});
+
+/* ---------- Territory tab ---------- */
+let ME=null;
+function streakDays(){
+  const k=t=>new Date(t+3*3600e3).toISOString().slice(0,10);
+  const set=new Set(S.records.filter(r=>r.source==='gps').map(r=>k(new Date(r.performed_at).getTime())));
+  let t=Date.now();if(!set.has(k(t)))t-=86400e3;
+  let n=0;while(set.has(k(t))){n++;t-=86400e3}
+  return n;
+}
+function territory(){
+  const held=S.me?.territory||0;
+  return `<div class="exh"><div class="eyebrow">TERRITORY</div><h2>Claim Addis, one zone at a time</h2></div>
+  <div class="tiles"><div class="tile"><span class="te">${held}</span><b>Zones held</b></div><div class="tile"><span class="te">${streakDays()}</span><b>Day streak</b><small>GPS moves</small></div><div class="tile"><span class="te" id="t-rank">–</span><b>Your rank</b><small id="t-rank-s">&nbsp;</small></div></div>
+  <div id="map"></div>
+  <button class="btn ghost" data-recenter style="margin-top:10px">📍 CENTER ON ME</button>
+  <div class="card" style="margin-top:14px"><h3>How to win zones</h3><p style="margin:0"><span style="color:var(--gold)">■</span> Yours &nbsp; <span style="color:var(--blue)">■</span> Another mover. Tap a zone for details.<br><br>Each zone is about 275 m wide. Walk, run or ride with GPS to visit zones. The mover with the most points over 30 days holds a zone: <b>10 points for every day you visit</b> (consistency) plus <b>up to 5 for how hard you move</b> (intensity). Come back often and push your pace to take zones over.</p></div>
+  <div class="sec">TOP MOVERS</div><div class="card" id="lb"><p style="margin:0">Loading…</p></div>`;
+}
+function locate(){geoOnce().then(p=>{if(!MAP)return;MAP.setView([p.lat,p.lng],15);if(ME)ME.remove();ME=L.circleMarker([p.lat,p.lng],{radius:7,color:'#fff',weight:2,fillColor:'#22c55e',fillOpacity:1}).addTo(MAP)}).catch(()=>{})}
+function initTMap(){
+  if(!$('map'))return;
   if(!window.L){$('map').innerHTML='<p style="padding:16px">The map could not load. Check your connection.</p>';return}
   if(MAP){MAP.remove();MAP=null}
   MAP=L.map('map').setView([9.03,38.76],13);
@@ -438,14 +463,19 @@ function openMap(){
       const r=await api(`/api/territory?s=${b.getSouth()}&w=${b.getWest()}&n=${b.getNorth()}&e=${b.getEast()}`);
       if(!r.success)return;
       LAYER.clearLayers();
-      r.cells.forEach(k=>L.rectangle([[k.y*0.0025,k.x*0.0025],[(k.y+1)*0.0025,(k.x+1)*0.0025]],{stroke:false,fillColor:k.m?'#f5c518':'#60a5fa',fillOpacity:Math.min(.75,.25+k.s/120)}).addTo(LAYER));
+      r.cells.forEach(k=>L.rectangle([[k.y*0.0025,k.x*0.0025],[(k.y+1)*0.0025,(k.x+1)*0.0025]],{stroke:true,weight:1,color:k.m?'#f5c518':'#60a5fa',fillColor:k.m?'#f5c518':'#60a5fa',fillOpacity:Math.min(.75,.25+k.s/120)}).bindPopup(k.m?`<b>Held by you</b><br>${k.s} points`:`<b>Held by another mover</b><br>${k.s} points<br>Visit on more days and move faster to take it.`).addTo(LAYER));
     }catch(_){}
   };
   MAP.on('moveend',draw);
   setTimeout(()=>{MAP.invalidateSize();draw()},150);
-  geoOnce().then(p=>{if(MAP)MAP.setView([p.lat,p.lng],15)}).catch(()=>{});
+  locate();
+  api('/api/leaderboard').then(r=>{
+    if(!r.success)return;
+    if($('t-rank')){$('t-rank').textContent=r.rank?'#'+r.rank:'–';$('t-rank-s').textContent=r.movers?'of '+r.movers+' movers':'no movers yet'}
+    if($('lb'))$('lb').innerHTML=r.top.length?r.top.map((t,i)=>`<div class="row" style="${t.me?'color:var(--gold);font-weight:800':''}"><span>${i+1}. ${t.me?'You':'Mover'}</span><span>${t.zones} zone${t.zones===1?'':'s'}</span></div>`).join(''):'<p style="margin:0">No zones claimed yet. Be the first: track a GPS move.</p>';
+  }).catch(()=>{});
 }
-document.addEventListener('click',e=>{if(e.target.closest('[data-map]'))openMap()});
+document.addEventListener('click',e=>{if(e.target.closest('[data-recenter]'))locate()});
 
 refresh();
 </script>
