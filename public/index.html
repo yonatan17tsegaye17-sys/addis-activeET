@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Addis Active</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0a1020">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -90,8 +94,9 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const al=t=>ACT[t]?ACT[t][1]:t;
 const cap=s=>s?s.charAt(0)+s.slice(1).toLowerCase():'';
 
+const tok=()=>{try{return localStorage.getItem('aa_token')}catch(_){return null}};
 async function api(path,body){
-  const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-telegram-init-data':tg.initData||''},body:body?JSON.stringify(body):undefined});
+  const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-telegram-init-data':tg.initData||'',...(tok()&&!tg.initData?{Authorization:'Bearer '+tok()}:{})},body:body?JSON.stringify(body):undefined});
   return r.json();
 }
 function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',3500)}
@@ -246,7 +251,7 @@ function commSheet(id){
 
 /* ---------- render + events ---------- */
 function render(){
-  if(!S.signedIn&&!S.err){$('xp').textContent='';$('nav').innerHTML='';$('view').innerHTML=gate();return}
+  if(!S.signedIn&&!S.err){$('xp').textContent='';$('nav').innerHTML='';$('view').innerHTML=gate();if(!S.me&&!tg.initData)mountLogin();return}
   $('xp').textContent=S.me?`LVL ${S.me.level} • ${S.me.xp} XP`:'Open in Telegram';
   $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''} ${k==='explore'?'ex':k==='territory'?'ex ter':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
   if(S.err){$('view').innerHTML=`<div class="card"><h3>Couldn't load</h3><p>${esc(S.err)}</p><button class="btn" data-retry>Try again</button></div>`;return}
@@ -293,9 +298,9 @@ document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;r
 function gate(){
   const n=esc(S.me?.first_name||'');
   const top='<div class="card hero"><h2 style="margin:0 0 6px">🇪🇹 Addis Active</h2>';
-  if(!S.me)return top+'<p style="margin:0;color:#cbd5e1">Open this app from Telegram to sign in.</p></div>';
-  if(!S.me.onboarded)return top+`<p style="margin:0 0 14px;color:#cbd5e1">Welcome, ${n}! Answer the 3 quick questions in the bot chat, then reopen the app.</p><button class="btn" data-close-app>GO TO CHAT</button></div>`;
-  return top+`<p style="margin:0 0 14px;color:#cbd5e1">Welcome back, ${n}. Signed in with Telegram.</p><button class="btn" data-signin>CONTINUE</button></div>`;
+  if(!S.me)return tg.initData?top+'<p style="margin:0;color:#cbd5e1">Sign-in failed. Close the app and reopen it from the bot.</p></div>':top+'<p style="margin:0 0 14px;color:#cbd5e1">Sign in with Telegram to join activities, track moves and claim territory.</p><div id="tg-login"></div></div>';
+  if(!S.me.onboarded&&tg.initData)return top+`<p style="margin:0 0 14px;color:#cbd5e1">Welcome, ${n}! Answer the 3 quick questions in the bot chat, then reopen the app.</p><button class="btn" data-close-app>GO TO CHAT</button></div>`;
+  return top+`<p style="margin:0 0 14px;color:#cbd5e1">Welcome back, ${n}. Signed in with Telegram.</p><button class="btn" data-signin>CONTINUE</button>${tg.initData?'':'<button class="btn ghost" data-signout style="margin-top:8px">SIGN OUT</button>'}</div>`;
 }
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-signin]')){S.signedIn=true;render()}
@@ -476,6 +481,26 @@ function initTMap(){
   }).catch(()=>{});
 }
 document.addEventListener('click',e=>{if(e.target.closest('[data-recenter]'))locate()});
+
+/* ---------- website sign-in + PWA ---------- */
+async function mountLogin(){
+  const el=$('tg-login');if(!el)return;
+  let c={};try{c=await api('/api/config')}catch(_){}
+  if(!c.botUsername){el.innerHTML='<p style="color:#fca5a5;margin:0">Website sign-in is not configured yet.</p>';return}
+  window.onTgAuth=async u=>{
+    try{const r=await api('/api/web-login',u);
+      if(r.success){try{localStorage.setItem('aa_token',r.token)}catch(_){}await refresh()}else toast(r.error||'Sign-in failed')}
+    catch(_){toast('Network error')}
+  };
+  const s=document.createElement('script');s.async=true;s.src='https://telegram.org/js/telegram-widget.js?22';
+  s.setAttribute('data-telegram-login',c.botUsername);s.setAttribute('data-size','large');s.setAttribute('data-radius','12');
+  s.setAttribute('data-onauth','onTgAuth(user)');s.setAttribute('data-request-access','write');
+  el.appendChild(s);
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-signout]')){try{localStorage.removeItem('aa_token')}catch(_){}S.me=null;S.signedIn=false;render()}
+});
+if('serviceWorker' in navigator&&!tg.initData)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 refresh();
 </script>
