@@ -72,8 +72,9 @@ async function upsertUser(tg) {
 }
 
 // XP is computed from real rows, never stored or client-supplied.
-function computeXp(participations, records) {
+function computeXp(participations, records, goals = []) {
   let xp = 0;
+  xp += 50 * goals.filter((g) => g.done).length; // achieved goals
   for (const p of participations) {
     if (p.activities && REAL_STATUSES.has(p.activities.status)) xp += 10;
   }
@@ -83,6 +84,7 @@ function computeXp(participations, records) {
     perDay[day] = (perDay[day] || 0) + 1;
     if (perDay[day] > 3) continue; // manual logs are self-reported: max 3/day count
     xp += 20 + Math.min(Math.floor(Number(r.distance_km || 0)), 10) * 3;
+    if (r.source === 'gps') xp += 10; // GPS-recorded moves are more verifiable
   }
   return xp;
 }
@@ -92,6 +94,39 @@ const json = (res, code, body) => {
   return res.status(code).json(body);
 };
 
+// ---- Goals + challenges (progress is always computed from real records) ----
+const GOAL_TYPES = ['SINGLE_DISTANCE', 'DISTANCE_TOTAL', 'DAYS_ACTIVE', 'ACTIVITY_COUNT'];
+const GOAL_UNITS = ['km', 'days', 'activities'];
+const etDay = (iso) => new Date(new Date(iso).getTime() + 3 * 3600e3).toISOString().slice(0, 10); // Addis = UTC+3
+function weekStartET() {
+  const d = new Date(Date.now() + 3 * 3600e3);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+function goalProgress(g, records) {
+  const since = new Date(g.created_at).getTime();
+  const rs = records.filter((r) => new Date(r.performed_at).getTime() >= since && (!g.activity_type || r.type === g.activity_type));
+  let v;
+  if (g.goal_type === 'SINGLE_DISTANCE') v = Math.max(0, ...rs.map((r) => Number(r.distance_km || 0)));
+  else if (g.goal_type === 'DISTANCE_TOTAL') v = rs.reduce((s, r) => s + Number(r.distance_km || 0), 0);
+  else if (g.goal_type === 'DAYS_ACTIVE') v = new Set(rs.map((r) => etDay(r.performed_at))).size;
+  else v = rs.length;
+  return Number(v.toFixed(2));
+}
+function computeChallenges(records, parts) {
+  const ws = weekStartET();
+  const wk = records.filter((r) => etDay(r.performed_at) >= ws);
+  const days = new Set(wk.map((r) => etDay(r.performed_at))).size;
+  const weekend = wk.some((r) => { const d = new Date(etDay(r.performed_at) + 'T00:00:00Z').getUTCDay(); return d === 0 || d === 6; });
+  const month = new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 7);
+  const comm = parts.filter((p) => p.activities && REAL_STATUSES.has(p.activities.status) && p.activities.community_id && String(p.joined_at).slice(0, 7) === month).length;
+  return [
+    { name: 'MOVE ADDIS', desc: 'Be active 3 days this week', progress: Math.min(days, 3), target: 3 },
+    { name: 'WEEKEND MOVER', desc: 'Log an activity this weekend', progress: weekend ? 1 : 0, target: 1 },
+    { name: 'COMMUNITY MONTH', desc: 'Join 4 community activities this month', progress: Math.min(comm, 4), target: 4 }
+  ].map((c) => ({ ...c, done: c.progress >= c.target }));
+}
+
 // ---- GET /api/bootstrap ----
 async function bootstrap(req, res) {
   const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
@@ -99,7 +134,7 @@ async function bootstrap(req, res) {
   const [places, acts, comms] = await Promise.all([
     supabase
       .from('places')
-      .select('id,slug,name,area,place_type,description,activity_types,featured,data_status,verification,tags,media:media_id(media_type,url,thumbnail,caption,video_status,is_placeholder)')
+      .select('id,slug,name,area,place_type,latitude,longitude,description,activity_types,featured,data_status,verification,tags,media:media_id(media_type,url,thumbnail,caption,video_status,is_placeholder)')
       .neq('verification', 'ARCHIVED')
       .order('featured', { ascending: false })
       .order('name'),
@@ -119,24 +154,38 @@ async function bootstrap(req, res) {
   let me = null;
   let joined = [];
   let records = [];
+  let goals = [];
+  let chal = [];
   if (tgUser) {
     const u = await upsertUser(tgUser);
     const [pr, rr] = await Promise.all([
       supabase
         .from('participations')
-        .select('activity_id,status,activities(status)')
+        .select('activity_id,status,joined_at,activities(status,community_id)')
         .eq('user_id', u.id)
         .neq('status', 'CANCELLED'),
       supabase
         .from('activity_records')
-        .select('id,type,distance_km,duration_seconds,place_id,performed_at')
+        .select('id,type,distance_km,duration_seconds,place_id,performed_at,source')
         .eq('user_id', u.id)
         .order('performed_at', { ascending: false })
         .limit(500)
     ]);
     if (pr.error) throw pr.error;
     if (rr.error) throw rr.error;
-    const xp = computeXp(pr.data, rr.data);
+    const gr = await supabase
+      .from('goals')
+      .select('id,name,goal_type,activity_type,target,unit,deadline,frequency,plan,status,created_at')
+      .eq('user_id', u.id)
+      .neq('status', 'ABANDONED')
+      .order('created_at', { ascending: false });
+    if (gr.error) throw gr.error;
+    goals = gr.data.map((g) => {
+      const progress = goalProgress(g, rr.data);
+      return { ...g, target: Number(g.target), progress, done: progress >= Number(g.target) };
+    });
+    chal = computeChallenges(rr.data, pr.data);
+    const xp = computeXp(pr.data, rr.data, goals);
     me = { onboarded: !!u.onboarded_at, first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
     joined = pr.data.map((x) => x.activity_id);
     records = rr.data;
@@ -147,7 +196,10 @@ async function bootstrap(req, res) {
     me,
     joined,
     records,
-    places: places.data,
+    goals,
+    challenges: chal,
+    // coordinates are only exposed for places marked VERIFIED
+    places: places.data.map((p) => (p.verification === 'VERIFIED' ? p : { ...p, latitude: null, longitude: null })),
     activities: acts.data,
     communities: comms.data
   });
@@ -237,6 +289,85 @@ async function logActivity(req, res) {
   return json(res, 200, { success: true, message: 'Activity saved.' });
 }
 
+// ---- POST /api/track (GPS) ----
+const MAXV = { RUNNING: 9, WALKING: 4, HIKING: 4, CYCLING: 20, FOOTBALL: 9, SWIMMING: 3, GYM: 9, STRENGTH: 9, OTHER: 9 }; // max m/s
+function hav(a, b) {
+  const R = 6371000, r = (x) => (x * Math.PI) / 180;
+  const dl = r(b.lat - a.lat), dg = r(b.lng - a.lng);
+  const q = Math.sin(dl / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dg / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(q));
+}
+async function track(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to track.' });
+  const { type, points } = req.body || {};
+  if (!ACTIVITY_TYPES.includes(type)) return json(res, 400, { success: false, error: 'Choose an activity type.' });
+  if (!Array.isArray(points) || points.length < 2 || points.length > 6000) {
+    return json(res, 400, { success: false, error: 'Not enough GPS data.' });
+  }
+  const pts = [];
+  for (const p of points) {
+    const lat = Number(p.lat), lng = Number(p.lng), t = Number(p.t);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(t) || Math.abs(lat) > 90 || Math.abs(lng) > 180) continue;
+    if (pts.length && t <= pts[pts.length - 1].t) continue;
+    pts.push({ lat, lng, t });
+  }
+  if (pts.length < 2) return json(res, 400, { success: false, error: 'Not enough GPS data.' });
+  const now = Date.now();
+  if (pts[0].t < now - 86400000 || pts[pts.length - 1].t > now + 300000) {
+    return json(res, 400, { success: false, error: 'Invalid track time.' });
+  }
+  let dist = 0, secs = 0, bad = 0, segs = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const dt = (pts[i].t - pts[i - 1].t) / 1000;
+    if (dt < 1 || dt > 120) continue; // gaps (screen locked) are not counted
+    segs++;
+    const d = hav(pts[i - 1], pts[i]);
+    if (d / dt > MAXV[type]) { bad++; continue; }
+    dist += d; secs += dt;
+  }
+  if (!segs) return json(res, 400, { success: false, error: 'Not enough continuous GPS data. Keep the screen on while tracking.' });
+  if (bad / segs > 0.2) return json(res, 400, { success: false, error: 'The GPS track looks unrealistic for this activity, so it was not saved.' });
+  if (dist < 50) return json(res, 400, { success: false, error: 'Too short to save (under 50 m).' });
+  const step = Math.ceil(pts.length / 500);
+  const user = await upsertUser(tgUser);
+  const { error } = await supabase.from('activity_records').insert({
+    user_id: user.id,
+    type,
+    distance_km: Number((dist / 1000).toFixed(2)),
+    duration_seconds: Math.round(secs),
+    gps_track: pts.filter((_, i) => i % step === 0),
+    source: 'gps',
+    performed_at: new Date(pts[0].t).toISOString()
+  });
+  if (error) throw error;
+  return json(res, 200, { success: true, message: `Saved: ${(dist / 1000).toFixed(2)} km in ${Math.round(secs / 60)} min.` });
+}
+
+// ---- POST /api/goal ----
+async function createGoal(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to set goals.' });
+  const { name, goalType, activityType, target, unit, deadline, frequency, plan } = req.body || {};
+  const t = Number(target);
+  if (typeof name !== 'string' || !name.trim() || name.length > 60) return json(res, 400, { success: false, error: 'Give your goal a short name.' });
+  if (!GOAL_TYPES.includes(goalType) || !GOAL_UNITS.includes(unit)) return json(res, 400, { success: false, error: 'Invalid goal.' });
+  if (!Number.isFinite(t) || t <= 0 || t > 100000) return json(res, 400, { success: false, error: 'Invalid target.' });
+  if (activityType && !ACTIVITY_TYPES.includes(activityType)) return json(res, 400, { success: false, error: 'Invalid activity.' });
+  if (deadline && (isNaN(new Date(deadline)) || new Date(deadline) > new Date(Date.now() + 400 * 86400e3))) return json(res, 400, { success: false, error: 'Invalid deadline.' });
+  const cleanPlan = Array.isArray(plan) && plan.length <= 16 ? plan.map((x) => String(x).slice(0, 240)) : null;
+  const user = await upsertUser(tgUser);
+  const { count } = await supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'ACTIVE');
+  if ((count || 0) >= 10) return json(res, 409, { success: false, error: 'You already have 10 active goals.' });
+  const { error } = await supabase.from('goals').insert({
+    user_id: user.id, name: name.trim(), goal_type: goalType, activity_type: activityType || null,
+    target: t, unit, deadline: deadline || null, frequency: frequency ? String(frequency).slice(0, 40) : null,
+    plan: cleanPlan, status: 'ACTIVE'
+  });
+  if (error) throw error;
+  return json(res, 200, { success: true, message: 'Goal saved. Every logged move now counts toward it.' });
+}
+
 // ---- Telegram bot (onboarding lives in onboarding.js) ----
 require('./onboarding')(bot, { supabase, upsertUser, appUrl: APP_URL });
 
@@ -247,6 +378,8 @@ module.exports = async (req, res) => {
     if (p === '/api/bootstrap' && req.method === 'GET') return await bootstrap(req, res);
     if (p === '/api/join' && req.method === 'POST') return await join(req, res);
     if (p === '/api/log' && req.method === 'POST') return await logActivity(req, res);
+    if (p === '/api/track' && req.method === 'POST') return await track(req, res);
+    if (p === '/api/goal' && req.method === 'POST') return await createGoal(req, res);
 
     if (req.method === 'POST') {
       if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
