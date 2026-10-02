@@ -186,7 +186,8 @@ async function bootstrap(req, res) {
     });
     chal = computeChallenges(rr.data, pr.data);
     const xp = computeXp(pr.data, rr.data, goals);
-    me = { onboarded: !!u.onboarded_at, first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
+    const tc = await supabase.from('cell_owners').select('cx', { count: 'exact', head: true }).eq('user_id', u.id);
+    me = { territory: tc.count || 0, onboarded: !!u.onboarded_at, first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
     joined = pr.data.map((x) => x.activity_id);
     records = rr.data;
   }
@@ -318,13 +319,14 @@ async function track(req, res) {
     return json(res, 400, { success: false, error: 'Invalid track time.' });
   }
   let dist = 0, secs = 0, bad = 0, segs = 0;
+  const okSegs = [];
   for (let i = 1; i < pts.length; i++) {
     const dt = (pts[i].t - pts[i - 1].t) / 1000;
     if (dt < 1 || dt > 120) continue; // gaps (screen locked) are not counted
     segs++;
     const d = hav(pts[i - 1], pts[i]);
     if (d / dt > MAXV[type]) { bad++; continue; }
-    dist += d; secs += dt;
+    dist += d; secs += dt; okSegs.push([pts[i - 1], pts[i], d]);
   }
   if (!segs) return json(res, 400, { success: false, error: 'Not enough continuous GPS data. Keep the screen on while tracking.' });
   if (bad / segs > 0.2) return json(res, 400, { success: false, error: 'The GPS track looks unrealistic for this activity, so it was not saved.' });
@@ -341,7 +343,25 @@ async function track(req, res) {
     performed_at: new Date(pts[0].t).toISOString()
   });
   if (error) throw error;
-  return json(res, 200, { success: true, message: `Saved: ${(dist / 1000).toFixed(2)} km in ${Math.round(secs / 60)} min.` });
+  // Claim map zones from the validated part of the track
+  const cells = new Set();
+  for (const [a, c2, d] of okSegs) {
+    const n = Math.max(1, Math.ceil(d / 60));
+    for (let k = 0; k <= n; k++) {
+      const f = k / n;
+      cells.add(`${Math.floor((a.lng + (c2.lng - a.lng) * f) / CELL)},${Math.floor((a.lat + (c2.lat - a.lat) * f) / CELL)}`);
+    }
+    if (cells.size >= 400) break;
+  }
+  const intensity = Math.min(5, 1 + Math.floor(((dist / secs) * 3.6) / 4));
+  const day = etDay(new Date(pts[0].t).toISOString());
+  const rows = [...cells].map((c) => { const [cx, cy] = c.split(',').map(Number); return { user_id: user.id, cx, cy, day, intensity }; });
+  let zones = 0;
+  if (rows.length) {
+    const cr = await supabase.from('cell_visits').upsert(rows, { onConflict: 'user_id,cx,cy,day' });
+    if (cr.error) console.error('cell_visits', cr.error); else zones = rows.length;
+  }
+  return json(res, 200, { success: true, message: `Saved: ${(dist / 1000).toFixed(2)} km in ${Math.round(secs / 60)} min. ${zones} map zone${zones === 1 ? '' : 's'} visited.` });
 }
 
 // ---- POST /api/goal ----
@@ -368,6 +388,26 @@ async function createGoal(req, res) {
   return json(res, 200, { success: true, message: 'Goal saved. Every logged move now counts toward it.' });
 }
 
+// ---- GET /api/territory (anonymised: other movers are never named) ----
+const CELL = 0.0025; // degrees, ~275 m
+async function territory(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const uid = tgUser ? (await upsertUser(tgUser)).id : null;
+  const q = new URL(req.url, 'http://localhost').searchParams;
+  const [s, w, n, e] = ['s', 'w', 'n', 'e'].map((k) => Number(q.get(k)));
+  if ([s, w, n, e].some((v) => !Number.isFinite(v)) || n < s || e < w || n - s > 0.2 || e - w > 0.2) {
+    return json(res, 400, { success: false, error: 'Invalid area.' });
+  }
+  const { data, error } = await supabase
+    .from('cell_owners')
+    .select('cx,cy,user_id,score')
+    .gte('cx', Math.floor(w / CELL)).lte('cx', Math.floor(e / CELL))
+    .gte('cy', Math.floor(s / CELL)).lte('cy', Math.floor(n / CELL))
+    .limit(5000);
+  if (error) throw error;
+  return json(res, 200, { success: true, cells: data.map((c) => ({ x: c.cx, y: c.cy, m: c.user_id === uid ? 1 : 0, s: c.score })) });
+}
+
 // ---- Telegram bot (onboarding lives in onboarding.js) ----
 require('./onboarding')(bot, { supabase, upsertUser, appUrl: APP_URL });
 
@@ -380,6 +420,7 @@ module.exports = async (req, res) => {
     if (p === '/api/log' && req.method === 'POST') return await logActivity(req, res);
     if (p === '/api/track' && req.method === 'POST') return await track(req, res);
     if (p === '/api/goal' && req.method === 'POST') return await createGoal(req, res);
+    if (p === '/api/territory' && req.method === 'GET') return await territory(req, res);
 
     if (req.method === 'POST') {
       if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
