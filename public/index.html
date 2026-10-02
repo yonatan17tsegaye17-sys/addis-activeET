@@ -6,40 +6,57 @@
 <title>Addis Active</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--line:#334155;--yellow:#facc15;--blue:#38bdf8;--text:#f8fafc;--muted:#94a3b8;--green:#34d399}
+:root{--bg:#0a1020;--s1:#111a2e;--s2:#17233e;--line:rgba(255,255,255,.08);--gold:#f5c518;--green:#22c55e;--red:#ef4444;--blue:#60a5fa;--text:#f1f5f9;--muted:#8b9ab3}
 *{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding-bottom:90px;-webkit-tap-highlight-color:transparent}
-.top{background:var(--card);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
-.top h1{margin:0;font-size:16px;color:var(--yellow)}
-.pill{background:var(--bg);border:1px solid var(--line);padding:4px 10px;border-radius:12px;font-size:11px;color:var(--green);font-weight:700}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(900px 420px at 50% -160px,#183057 0%,var(--bg) 62%) fixed;color:var(--text);margin:0;padding-bottom:116px;-webkit-tap-highlight-color:transparent}
+.top{background:rgba(10,16,32,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:15px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.top::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#078930 0 33.3%,#fcdd09 33.3% 66.6%,#da121a 66.6%)}
+.top h1{margin:0;font-size:17px;font-weight:800;letter-spacing:.3px}
+.pill{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);padding:5px 11px;border-radius:999px;font-size:11px;color:var(--green);font-weight:700}
 #view{padding:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
-.card h3{margin:0 0 6px;font-size:18px;color:var(--blue)}
-.card p{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.45}
-.hero{background:linear-gradient(135deg,#1e3a8a,#0f172a)}
-.eyebrow{font-size:11px;color:var(--yellow);font-weight:700;margin-bottom:4px;letter-spacing:.5px}
-.sec{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin:20px 2px 8px}
-.btn{background:#2563eb;color:#fff;border:0;width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
-.btn:active{background:#1d4ed8}.btn[disabled]{background:#334155;color:var(--green)}
-.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--blue)}
-.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;margin-right:6px;border:1px solid var(--line);color:var(--muted)}
-.badge.demo{color:#fbbf24;border-color:#78560f}.badge.ok{color:var(--green);border-color:#14614a}
-.media{width:100%;height:150px;border-radius:12px;margin-bottom:12px;background:linear-gradient(135deg,#14532d,#1e3a8a);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.card{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.card h3{margin:0 0 6px;font-size:18px;font-weight:700}
+.card p{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.5}
+.hero{background:linear-gradient(135deg,#14532d 0%,#0f2a4d 58%,#0a1020 100%);border-color:rgba(255,255,255,.14)}
+.eyebrow{font-size:11px;color:var(--gold);font-weight:800;margin-bottom:6px;letter-spacing:1.2px}
+.sec{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:1.4px;margin:24px 2px 10px}
+.btn{background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;border:0;width:100%;padding:14px;border-radius:14px;font-size:14px;font-weight:800;letter-spacing:.4px;cursor:pointer;box-shadow:0 6px 16px rgba(34,197,94,.28)}
+.btn:active{transform:scale(.985)}
+.btn[disabled]{background:var(--s2);color:var(--green);box-shadow:none;border:1px solid var(--line)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text);box-shadow:none}
+.badge{display:inline-block;font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;margin-right:6px;border:1px solid var(--line);color:var(--muted);letter-spacing:.4px}
+.badge.demo{color:#fbbf24;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.badge.ok{color:var(--green);border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
+.media{width:100%;height:160px;border-radius:16px;margin-bottom:14px;background:radial-gradient(circle at 80% 20%,rgba(245,197,24,.25),transparent 45%),linear-gradient(135deg,#14532d,#1e3a8a);background-size:cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line)}
 video.media{height:auto}
-.play{width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:18px}
-.mt{font-size:11px;font-weight:700;margin-top:8px;letter-spacing:.5px}.ms{font-size:11px;color:#cbd5e1}
-input,select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px;margin-bottom:10px}
+.play{width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:17px}
+.mt{font-size:11px;font-weight:800;margin-top:10px;letter-spacing:1px}.ms{font-size:11px;color:#cbd5e1}
+input,select{width:100%;background:var(--s1);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:15px;margin-bottom:10px;outline:0}
+input:focus,select:focus{border-color:var(--gold)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}
-.chip{flex:none;padding:6px 12px;border-radius:14px;border:1px solid var(--line);font-size:12px;color:var(--muted);cursor:pointer}
-.chip.on{background:var(--blue);color:#0f172a;border-color:var(--blue);font-weight:700}
-.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+.chip.on{background:var(--gold);color:#0a1020;border-color:var(--gold);font-weight:800}
+.exh h2{margin:0 0 14px;font-size:27px;font-weight:800;line-height:1.15}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 16px}
+.tile{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:18px;padding:14px 6px 12px;text-align:center;cursor:pointer}
+.tile .te{display:block;font-size:28px;margin-bottom:6px}
+.tile b{display:block;font-size:12px;font-weight:700}
+.tile small{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.tile.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 8px 20px rgba(245,197,24,.15)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13px}
 .row:last-child{border:0}.muted{color:var(--muted)}
 .item{cursor:pointer}
-.nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:10px 0 14px;z-index:1000}
-.tab{flex:1;text-align:center;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer}
-.tab.on{color:var(--blue)}.tab i{display:block;font-style:normal;font-size:16px;margin-bottom:2px}
+.nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));background:rgba(17,26,46,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:26px;display:flex;align-items:flex-end;padding:8px 6px 10px;z-index:1000;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.tab{flex:1;text-align:center;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;padding-top:4px}
+.tab i{display:block;font-style:normal}
+.tab svg{width:22px;height:22px;display:block;margin:0 auto 3px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--gold)}
+.tab.ex{color:var(--text)}
+.tab.ex i{display:flex;width:60px;height:60px;margin:-32px auto 5px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#15803d);align-items:center;justify-content:center;border:4px solid var(--bg);box-shadow:0 8px 22px rgba(34,197,94,.5)}
+.tab.ex i svg{width:28px;height:28px;margin:0;stroke:#fff}
+.tab.ex.on{color:var(--gold)}
 #sheet{position:fixed;inset:0;background:var(--bg);z-index:2000;overflow-y:auto;padding:16px 16px 40px;display:none}
-#toast{position:fixed;left:16px;right:16px;bottom:100px;background:#0b1220;border:1px solid var(--line);padding:12px;border-radius:12px;font-size:13px;z-index:3000;display:none}
+#toast{position:fixed;left:16px;right:16px;bottom:120px;background:#0b1220;border:1px solid var(--line);padding:13px;border-radius:14px;font-size:13px;z-index:3000;display:none;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .lock{opacity:.4}
 </style>
 </head>
@@ -52,12 +69,14 @@ input,select{width:100%;background:var(--bg);color:var(--text);border:1px solid 
 
 <script>
 const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
-const S = {me:null,places:[],activities:[],communities:[],joined:new Set(),records:[],tab:'home',q:'',type:'ALL',err:null};
-const TABS=[['home','🏠','Home'],['explore','🗺️','Explore'],['track','⚡','Track'],['community','👥','Community'],['pulse','🏛️','Pulse'],['journey','👤','Journey']];
+const S = {me:null,places:[],activities:[],communities:[],joined:new Set(),records:[],tab:'home',q:'',type:'ALL',act:'ALL',err:null};
+const TABS=[['home',`<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,'Home'],['community',`<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></svg>`,'Community'],['explore',`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>`,'Explore'],['track',`<svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>`,'Track'],['journey',`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>`,'Journey']];
 const PT={PARK:'Park',ROUTE:'Route',FACILITY:'Facility',ACTIVITY_AREA:'Activity area',COMMUNITY_LOCATION:'Community location',EVENT_LOCATION:'Event location'};
-const AT=['RUNNING','WALKING','CYCLING','FOOTBALL','HIKING','SWIMMING','GYM','OTHER'];
+const ACT={RUNNING:['🏃','Run'],WALKING:['🚶','Walk'],CYCLING:['🚴','Bike'],HIKING:['🥾','Hike'],SWIMMING:['🏊','Swim'],FOOTBALL:['⚽','Football'],STRENGTH:['🏋️','Outdoor strength'],GYM:['💪','Gym'],OTHER:['✨','Other']};
+const AT=Object.keys(ACT);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const al=t=>ACT[t]?ACT[t][1]:t;
 const cap=s=>s?s.charAt(0)+s.slice(1).toLowerCase():'';
 
 async function api(path,body){
@@ -102,7 +121,7 @@ function when(a){
 }
 function actCard(a){
   const pl=a.place_id?placeById(a.place_id):null, cm=a.community_id?commById(a.community_id):null, done=S.joined.has(a.id);
-  return `<div class="card"><div>${actBadge(a.status)}<span class="badge">${esc(cap(a.category))}</span></div>
+  return `<div class="card"><div>${actBadge(a.status)}<span class="badge">${esc(al(a.category))}</span></div>
   <h3 style="margin-top:8px">${esc(a.name)}</h3>
   <p>📅 ${when(a)}${pl?`<br>📍 ${esc(pl.name)}`:''}${cm?`<br>👥 ${esc(cm.name)}`:''}${a.description?`<br>${esc(a.description)}`:''}</p>
   <button class="btn" data-join="${a.id}" ${done?'disabled':''}>${done?'JOINED ✓':'JOIN'}</button></div>`;
@@ -130,19 +149,23 @@ function home(){
 }
 
 function explore(){
-  const chips=['ALL',...Object.keys(PT)].map(t=>`<div class="chip ${S.type===t?'on':''}" data-type="${t}">${t==='ALL'?'All':PT[t]}</div>`).join('');
-  return `<input id="q" placeholder="Search places, activities, communities" value="${esc(S.q)}" autocomplete="off"><div class="chips">${chips}</div><div id="results"></div>`;
+  const cnt=t=>S.places.filter(p=>(p.activity_types||[]).includes(t)).length+S.activities.filter(a=>a.category===t).length+S.communities.filter(c=>c.activity_type===t).length;
+  const tiles=Object.keys(ACT).filter(t=>t!=='OTHER').map(t=>`<div class="tile ${S.act===t?'on':''}" data-act="${t}"><span class="te">${ACT[t][0]}</span><b>${ACT[t][1]}</b><small>${cnt(t)} listed</small></div>`).join('');
+  const chips=['ALL',...Object.keys(PT)].map(t=>`<div class="chip ${S.type===t?'on':''}" data-type="${t}">${t==='ALL'?'All places':PT[t]}</div>`).join('');
+  return `<div class="exh"><div class="eyebrow">DISCOVER ADDIS</div><h2>What do you want to do today?</h2></div>
+  <input id="q" placeholder="Search places, activities, communities" value="${esc(S.q)}" autocomplete="off">
+  <div class="tiles">${tiles}</div><div class="chips">${chips}</div><div id="results"></div>`;
 }
 function results(){
-  const q=S.q.trim().toLowerCase(), hit=(...f)=>!q||f.some(x=>String(x||'').toLowerCase().includes(q));
-  const pl=S.places.filter(p=>(S.type==='ALL'||p.place_type===S.type)&&hit(p.name,p.area,PT[p.place_type],(p.tags||[]).join(' '),(p.activity_types||[]).join(' ')));
-  const ac=q?S.activities.filter(a=>hit(a.name,a.category,a.description)):[];
-  const cm=q?S.communities.filter(c=>hit(c.name,c.activity_type,c.tagline)):[];
+  const q=S.q.trim().toLowerCase(),A=S.act,hit=(...f)=>!q||f.some(x=>String(x||'').toLowerCase().includes(q));
+  const pl=S.places.filter(p=>(S.type==='ALL'||p.place_type===S.type)&&(A==='ALL'||(p.activity_types||[]).includes(A))&&hit(p.name,p.area,PT[p.place_type],(p.tags||[]).join(' '),(p.activity_types||[]).map(al).join(' ')));
+  const ac=(q||A!=='ALL')?S.activities.filter(a=>(A==='ALL'||a.category===A)&&hit(a.name,al(a.category),a.description)):[];
+  const cm=(q||A!=='ALL')?S.communities.filter(c=>(A==='ALL'||c.activity_type===A)&&hit(c.name,al(c.activity_type),c.tagline)):[];
   let o='';
-  if(pl.length)o+=`<div class="sec">PLACES</div><div class="card">`+pl.map(p=>`<div class="row item" data-place="${p.id}"><span><b>${esc(p.name)}</b><br><span class="muted">${esc(PT[p.place_type]||'')}${p.area?' · '+esc(p.area):''}</span></span>${dataBadge(p.data_status)}</div>`).join('')+`</div>`;
   if(ac.length)o+=`<div class="sec">ACTIVITIES</div>`+ac.map(actCard).join('');
   if(cm.length)o+=`<div class="sec">COMMUNITIES</div><div class="card">`+cm.map(c=>`<div class="row item" data-comm="${c.id}"><b>${esc(c.name)}</b>${dataBadge(c.data_status)}</div>`).join('')+`</div>`;
-  $('results').innerHTML=o||`<div class="card"><p style="margin:0">Nothing found. Try another word.</p></div>`;
+  if(pl.length)o+=`<div class="sec">PLACES</div><div class="card">`+pl.map(p=>`<div class="row item" data-place="${p.id}"><span><b>${esc(p.name)}</b><br><span class="muted">${esc(PT[p.place_type]||'')}${p.area?' · '+esc(p.area):''}</span></span>${dataBadge(p.data_status)}</div>`).join('')+`</div>`;
+  $('results').innerHTML=o||`<div class="card"><p style="margin:0">Nothing listed yet${A!=='ALL'?' for '+esc(al(A)):''}. Try another activity or word.</p></div>`;
 }
 
 function community(){
@@ -151,7 +174,7 @@ function community(){
 }
 
 function track(){
-  const opts=AT.map(t=>`<option value="${t}">${cap(t)}</option>`).join('');
+  const opts=AT.map(t=>`<option value="${t}">${al(t)}</option>`).join('');
   const pls=S.places.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
   let o=`<div class="card"><h3>Log an activity</h3><p>Manual log. Entries are self-reported.</p>
   <select id="l-type">${opts}</select>
@@ -164,10 +187,9 @@ function track(){
     const m=r.duration_seconds?Math.round(r.duration_seconds/60)+' min':'';
     const d=r.distance_km!=null?Number(r.distance_km)+' km':'';
     const pl=r.place_id&&placeById(r.place_id);
-    return `<div class="row"><span><b>${esc(cap(r.type))}</b><br><span class="muted">${[d,m].filter(Boolean).join(' · ')}${pl?' · '+esc(pl.name):''}</span></span><span class="muted">${new Date(r.performed_at).toLocaleDateString()}</span></div>`}).join('')+`</div>`;
+    return `<div class="row"><span><b>${esc(al(r.type))}</b><br><span class="muted">${[d,m].filter(Boolean).join(' · ')}${pl?' · '+esc(pl.name):''}</span></span><span class="muted">${new Date(r.performed_at).toLocaleDateString()}</span></div>`}).join('')+`</div>`;
 }
 
-function pulse(){return `<div class="card"><h3>City Pulse</h3><p style="margin:0">Coming soon. We'll only show live city data once we have a reliable source.</p></div>`}
 
 function journey(){
   if(!S.me)return `<div class="card"><p style="margin:0">Open Addis Active from Telegram to see your journey.</p></div>`;
@@ -191,7 +213,7 @@ function placeSheet(id){
   openSheet(`${media(p.media)}<div>${dataBadge(p.data_status)}<span class="badge">${esc(PT[p.place_type]||'')}</span></div>
   <h2 style="margin:8px 0 4px">${esc(p.name)}</h2><p class="muted" style="margin:0 0 10px">${p.area?esc(p.area)+', ':''}${esc('Addis Ababa')}</p>
   <div class="card"><p style="margin:0">${esc(p.description||'Information to be verified')}</p></div>
-  <div class="card"><div class="row"><span>Activities</span><span>${(p.activity_types||[]).map(cap).join(', ')||'—'}</span></div>
+  <div class="card"><div class="row"><span>Activities</span><span>${(p.activity_types||[]).map(al).join(', ')||'—'}</span></div>
   <div class="row"><span>Distance</span><span>Explore route</span></div>
   <div class="row"><span>Address / access</span><span>${p.data_status==='VERIFIED'?'—':'Information to be verified'}</span></div></div>
   ${acts.length?`<div class="sec">ACTIVITIES HERE</div>`+acts.map(actCard).join(''):''}
@@ -200,7 +222,7 @@ function placeSheet(id){
 function commSheet(id){
   const c=commById(id); if(!c)return;
   const acts=S.activities.filter(a=>a.community_id===id);
-  openSheet(`<div>${dataBadge(c.data_status)}${c.activity_type?`<span class="badge">${esc(cap(c.activity_type))}</span>`:''}</div>
+  openSheet(`<div>${dataBadge(c.data_status)}${c.activity_type?`<span class="badge">${esc(al(c.activity_type))}</span>`:''}</div>
   <h2 style="margin:8px 0 4px">${esc(c.name)}</h2><p class="muted" style="margin:0 0 10px">${esc(c.tagline||'')}</p>
   <div class="card"><p style="margin:0">${esc(c.description||'Information to be verified')}</p></div>
   <div class="card"><div class="row"><span>Schedule</span><span>${esc(c.schedule||'Information to be verified')}</span></div>
@@ -212,21 +234,22 @@ function commSheet(id){
 function render(){
   if(!S.signedIn&&!S.err){$('xp').textContent='';$('nav').innerHTML='';$('view').innerHTML=gate();return}
   $('xp').textContent=S.me?`LVL ${S.me.level} • ${S.me.xp} XP`:'Open in Telegram';
-  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
+  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''} ${k==='explore'?'ex':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
   if(S.err){$('view').innerHTML=`<div class="card"><h3>Couldn't load</h3><p>${esc(S.err)}</p><button class="btn" data-retry>Try again</button></div>`;return}
-  const f={home,explore,track,community,pulse,journey}[S.tab];
+  const f={home,explore,track,community,journey}[S.tab];
   $('view').innerHTML=f();
   if(S.tab==='explore')results();
 }
 
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('[data-tab],[data-join],[data-place],[data-comm],[data-close],[data-type],[data-retry],#l-save');
+  const t=e.target.closest('[data-tab],[data-join],[data-place],[data-comm],[data-close],[data-type],[data-act],[data-retry],#l-save');
   if(!t)return;
   if(tg.HapticFeedback)tg.HapticFeedback.selectionChanged();
   if(t.dataset.tab){S.tab=t.dataset.tab;closeSheet();render();window.scrollTo(0,0)}
   else if(t.dataset.close!==undefined)closeSheet();
   else if(t.dataset.retry!==undefined)refresh();
   else if(t.dataset.type){S.type=t.dataset.type;render()}
+  else if(t.dataset.act){S.act=S.act===t.dataset.act?'ALL':t.dataset.act;render()}
   else if(t.dataset.place)placeSheet(t.dataset.place);
   else if(t.dataset.comm)commSheet(t.dataset.comm);
   else if(t.dataset.join){
