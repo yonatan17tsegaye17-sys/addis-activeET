@@ -408,6 +408,29 @@ async function territory(req, res) {
   return json(res, 200, { success: true, cells: data.map((c) => ({ x: c.cx, y: c.cy, m: c.user_id === uid ? 1 : 0, s: c.score })) });
 }
 
+// ---- GET /api/leaderboard (anonymous: shows zone counts, never names) ----
+async function leaderboard(req, res) {
+  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const uid = tgUser ? (await upsertUser(tgUser)).id : null;
+  let rows = [];
+  for (let i = 0; i < 20; i++) {
+    const { data, error } = await supabase.from('cell_owners').select('user_id').order('cx').order('cy').range(i * 1000, i * 1000 + 999);
+    if (error) throw error;
+    rows = rows.concat(data);
+    if (data.length < 1000) break;
+  }
+  const counts = {};
+  for (const r of rows) counts[r.user_id] = (counts[r.user_id] || 0) + 1;
+  const arr = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const idx = arr.findIndex(([id]) => id === uid);
+  return json(res, 200, {
+    success: true,
+    movers: arr.length,
+    rank: idx >= 0 ? idx + 1 : null,
+    top: arr.slice(0, 10).map(([id, n]) => ({ zones: n, me: id === uid ? 1 : 0 }))
+  });
+}
+
 // ---- Telegram bot (onboarding lives in onboarding.js) ----
 require('./onboarding')(bot, { supabase, upsertUser, appUrl: APP_URL });
 
@@ -421,6 +444,7 @@ module.exports = async (req, res) => {
     if (p === '/api/track' && req.method === 'POST') return await track(req, res);
     if (p === '/api/goal' && req.method === 'POST') return await createGoal(req, res);
     if (p === '/api/territory' && req.method === 'GET') return await territory(req, res);
+    if (p === '/api/leaderboard' && req.method === 'GET') return await leaderboard(req, res);
 
     if (req.method === 'POST') {
       if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
