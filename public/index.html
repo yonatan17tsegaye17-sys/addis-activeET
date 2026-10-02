@@ -58,6 +58,8 @@ input:focus,select:focus{border-color:var(--gold)}
 #sheet{position:fixed;inset:0;background:var(--bg);z-index:2000;overflow-y:auto;padding:16px 16px 40px;display:none}
 #toast{position:fixed;left:16px;right:16px;bottom:120px;background:#0b1220;border:1px solid var(--line);padding:13px;border-radius:14px;font-size:13px;z-index:3000;display:none;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .lock{opacity:.4}
+.bar{height:8px;background:var(--s1);border-radius:99px;overflow:hidden;margin:10px 0 4px;border:1px solid var(--line)}.bar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,var(--gold));border-radius:99px}
+details summary{cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;margin-top:10px}
 </style>
 </head>
 <body>
@@ -89,7 +91,7 @@ async function refresh(){
   try{
     const d=await api('/api/bootstrap');
     if(!d.success) throw new Error(d.error||'Load failed');
-    Object.assign(S,{me:d.me,places:d.places,activities:d.activities,communities:d.communities,records:d.records,joined:new Set(d.joined),err:null});
+    Object.assign(S,{me:d.me,places:d.places,activities:d.activities,communities:d.communities,records:d.records,goals:d.goals||[],challenges:d.challenges||[],joined:new Set(d.joined),err:null});
   }catch(e){S.err=e.message}
   render();
 }
@@ -138,10 +140,11 @@ function home(){
   <p style="color:#cbd5e1;margin:0">DISCOVER ADDIS · MOVE ADDIS · CONNECT ADDIS</p></div>`;
   if(!S.me&&!S.err)o+=`<div class="card"><p style="margin:0">Open Addis Active from Telegram to join activities and track your moves.</p></div>`;
   o+=`<div class="sec">YOUR NEXT MOVE</div>`+(next?actCard(next):`<div class="card"><p style="margin:0">No activities yet.</p></div>`);
-  o+=`<div class="sec">YOUR GOAL</div><div class="card"><h3>What do you want to achieve?</h3><p style="margin:0">Goals are coming soon.</p></div>`;
+  o+=goalHome();
   if(feat)o+=`<div class="sec">EXPLORE ADDIS</div><div class="card item" data-place="${feat.id}">${media(feat.media)}<h3>${esc(feat.name)}</h3><p style="margin:0">${esc(PT[feat.place_type]||'')}${feat.area?' · '+esc(feat.area):''}</p></div>`;
   const nearC=S.communities[0];
   if(nearC)o+=`<div class="sec">COMMUNITY</div><div class="card item" data-comm="${nearC.id}"><h3>${esc(nearC.name)}</h3><p style="margin:0">View community</p></div>`;
+  o+=nearCard();
   o+=`<div class="sec">YOUR PROGRESS</div><div class="card">`+(S.records.length||S.joined.size
     ?`<div class="row"><span>Logged activities</span><b>${S.records.length}</b></div><div class="row"><span>Joined activities</span><b>${S.joined.size}</b></div><div class="row"><span>Active days</span><b>${days}</b></div>`
     :`<p style="margin:0">Start your first activity.</p>`)+`</div>`;
@@ -176,7 +179,7 @@ function community(){
 function track(){
   const opts=AT.map(t=>`<option value="${t}">${al(t)}</option>`).join('');
   const pls=S.places.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  let o=`<div class="card"><h3>Log an activity</h3><p>Manual log. Entries are self-reported.</p>
+  let o=trackerCard()+`<div class="card"><h3>Log manually</h3><p>Self-reported, so it earns less XP than a GPS move.</p>
   <select id="l-type">${opts}</select>
   <input id="l-dist" type="number" inputmode="decimal" step="0.1" min="0" placeholder="Distance (km)">
   <input id="l-min" type="number" inputmode="numeric" min="1" placeholder="Duration (minutes)">
@@ -198,6 +201,7 @@ function journey(){
   const B=[['First Move',S.records.length>0],['First Run',has('RUNNING')],['First Walk',has('WALKING')],['First Ride',has('CYCLING')],['Addis Explorer (3 places)',explored>=3]];
   const mine=S.activities.filter(a=>S.joined.has(a.id));
   let o=`<div class="card hero"><h2 style="margin:0 0 4px">${esc(S.me.first_name||'Explorer')}</h2><p style="margin:0;color:#cbd5e1">${S.me.username?'@'+esc(S.me.username)+' · ':''}Level ${S.me.level} · ${S.me.xp} XP</p></div>`;
+  o+=goalsBlock()+challengeBlock();
   o+=`<div class="sec">BADGES</div><div class="card">`+B.map(([n,ok])=>`<div class="row ${ok?'':'lock'}"><span>${ok?'🏅':'🔒'} ${n}</span></div>`).join('')+`</div>`;
   o+=`<div class="sec">EXPLORED</div><div class="card"><p style="margin:0">${explored?explored+' Addis location'+(explored>1?'s':'')+' logged':'Start exploring Addis.'}</p></div>`;
   o+=`<div class="sec">JOINED ACTIVITIES</div>`+(mine.length?`<div class="card">`+mine.map(a=>`<div class="row"><b>${esc(a.name)}</b>${actBadge(a.status)}</div>`).join('')+`</div>`:`<div class="card"><p style="margin:0">Your journey starts here.</p></div>`);
@@ -285,6 +289,124 @@ function gate(){
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-signin]')){S.signedIn=true;render()}
   else if(e.target.closest('[data-close-app]')){tg.close()}
+});
+
+/* ---------- GPS tracker + nearest ---------- */
+const G={on:false,pts:[],type:'RUNNING',dist:0,t0:0,err:'',errN:0};
+let NEAR=null;
+const hav=(a,b)=>{const R=6371000,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dg=r(b.lng-a.lng),q=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(q))};
+function geoOnce(){return new Promise((res,rej)=>{
+  const lm=tg.LocationManager;
+  if(lm){
+    const go=()=>lm.getLocation(l=>{
+      if(l)return res({lat:l.latitude,lng:l.longitude,acc:l.horizontal_accuracy||30,t:Date.now()});
+      if(lm.isAccessRequested&&!lm.isAccessGranted&&lm.openSettings)lm.openSettings();
+      rej(new Error('Location is off. Allow it for this app in Telegram settings.'));
+    });
+    lm.isInited?go():lm.init(go);return;
+  }
+  if(!navigator.geolocation)return rej(new Error('Location is not supported here.'));
+  navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy,t:Date.now()}),e=>rej(new Error(e.message||'Location error')),{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+})}
+function trackerCard(){
+  if(!G.on){
+    const opts=AT.filter(t=>t!=='OTHER').map(t=>`<option value="${t}" ${G.type===t?'selected':''}>${ACT[t][0]} ${al(t)}</option>`).join('');
+    return `<div class="card hero"><div class="eyebrow">GPS TRACKER</div><h3 style="color:#fff">Track a move</h3><p style="color:#cbd5e1">Keep the app open and the screen on while you move. Tracking cannot run with the screen locked.</p>${G.err?`<p style="color:#fca5a5">${esc(G.err)}</p>`:''}<select id="g-type">${opts}</select><button class="btn" data-gstart>START</button></div>`;
+  }
+  return `<div class="card hero"><div class="eyebrow">TRACKING · ${esc(al(G.type))}</div><h2 id="g-stats" style="margin:4px 0 14px;font-size:30px">0.00 km · 0:00</h2><button class="btn" data-gstop>STOP &amp; SAVE</button><button class="btn ghost" data-gdiscard style="margin-top:8px">DISCARD</button></div>`;
+}
+function gTick(){const el=$('g-stats');if(el){const s=Math.floor((Date.now()-G.t0)/1000);el.textContent=(G.dist/1000).toFixed(2)+' km · '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}}
+function gPoll(){geoOnce().then(p=>{G.errN=0;if(p.acc>50)return;const l=G.pts[G.pts.length-1];if(l){const d=hav(l,p);if(d<3)return;G.dist+=d}G.pts.push({t:p.t,lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)})}).catch(()=>{G.errN++})}
+async function gStart(){
+  G.type=$('g-type').value;G.pts=[];G.dist=0;G.err='';G.errN=0;
+  try{const p=await geoOnce();if(p.acc<=50)G.pts=[{t:p.t,lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)}]}catch(e){G.err=e.message;render();return}
+  G.on=true;G.t0=Date.now();
+  if(tg.enableClosingConfirmation)tg.enableClosingConfirmation();
+  try{G.wl=await navigator.wakeLock.request('screen')}catch(_){}
+  G.poll=setInterval(gPoll,4000);G.tk=setInterval(gTick,1000);render();
+}
+function gStop(){clearInterval(G.poll);clearInterval(G.tk);G.on=false;try{G.wl&&G.wl.release()}catch(_){}if(tg.disableClosingConfirmation)tg.disableClosingConfirmation()}
+async function gSave(){
+  const pts=G.pts.slice();gStop();
+  try{const r=await api('/api/track',{type:G.type,points:pts});toast(r.success?r.message:(r.error||'Could not save'));if(r.success)await refresh();else render()}
+  catch(_){toast('Network error');render()}
+}
+function nearCard(){
+  if(!S.places.some(p=>p.latitude!=null))return '';
+  let b='<div class="sec">NEAR YOU</div><div class="card">';
+  if(NEAR==='err')b+='<p>Could not read your location. Allow location access and try again.</p>';
+  else if(NEAR){
+    const km=d=>(d/1000).toFixed(1)+' km';
+    b+=NEAR.place?`<div class="row item" data-place="${NEAR.place.x.id}"><span><b>${esc(NEAR.place.x.name)}</b><br><span class="muted">Nearest place · ${km(NEAR.place.d)} (straight line)</span></span></div>`:'';
+    b+=NEAR.club?`<div class="row item" data-comm="${NEAR.club.c.id}"><span><b>${esc(NEAR.club.c.name)}</b><br><span class="muted">Nearest club · ${km(NEAR.club.d)} · meets near ${esc(NEAR.club.at.name)}</span></span></div>`:'<p style="margin:8px 0">No club with a verified meeting place yet.</p>';
+  }
+  return b+`<button class="btn ghost" data-near style="margin-top:10px">${NEAR&&NEAR!=='err'?'REFRESH':'FIND NEAREST'}</button></div>`;
+}
+async function findNear(btn){
+  btn.disabled=true;
+  try{
+    const p=await geoOnce();
+    const pl=S.places.filter(x=>x.latitude!=null&&x.longitude!=null).map(x=>({x,d:hav(p,{lat:x.latitude,lng:x.longitude})})).sort((a,b)=>a.d-b.d);
+    const cl=S.communities.map(c=>{const w=c.primary_place_id&&pl.find(q=>q.x.id===c.primary_place_id);return w?{c,d:w.d,at:w.x}:null}).filter(Boolean).sort((a,b)=>a.d-b.d);
+    NEAR={place:pl[0]||null,club:cl[0]||null};
+  }catch(e){NEAR='err'}
+  render();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-gstart],[data-gstop],[data-gdiscard],[data-near]');if(!t)return;
+  if(t.dataset.gstart!==undefined)gStart();
+  else if(t.dataset.gstop!==undefined)gSave();
+  else if(t.dataset.gdiscard!==undefined){gStop();render()}
+  else if(t.dataset.near!==undefined)findNear(t);
+});
+
+/* ---------- goals, goal assistant, challenges ---------- */
+const PRE={first5k:['First 5K','SINGLE_DISTANCE','RUNNING',5,'km'],first10k:['First 10K','SINGLE_DISTANCE','RUNNING',10,'km'],run20:['Run 20 km','DISTANCE_TOTAL','RUNNING',20,'km'],ride50:['Cycle 50 km','DISTANCE_TOTAL','CYCLING',50,'km'],routine:['Weekly routine','DAYS_ACTIVE',null,0,'days']};
+let W=null;
+function goalBody(g){const pct=Math.min(100,Math.round(g.progress/g.target*100));return `<h3>${esc(g.name)}</h3><p style="margin:0">${g.progress} / ${g.target} ${esc(g.unit)} · ${pct}%${g.done?' · ✅ Achieved':''}</p><div class="bar"><i style="width:${pct}%"></i></div>`+(g.plan?`<details><summary>View plan</summary><p style="margin:8px 0 0">${g.plan.map(esc).join('<br>')}</p></details>`:'')}
+function goalHome(){
+  const g=(S.goals||[]).find(x=>x.status==='ACTIVE'&&!x.done);
+  return `<div class="sec">YOUR GOAL</div><div class="card">`+(g?goalBody(g):`<h3>What do you want to achieve?</h3><p>Answer 5 quick questions and get a realistic plan.</p><button class="btn" data-newgoal>SET A GOAL</button>`)+`</div>`;
+}
+function goalsBlock(){const gs=S.goals||[];return `<div class="sec">GOALS</div>`+(gs.length?gs.map(g=>`<div class="card">${goalBody(g)}</div>`).join('')+`<button class="btn ghost" data-newgoal>+ NEW GOAL</button>`:`<div class="card"><h3>What do you want to achieve?</h3><button class="btn" data-newgoal>SET A GOAL</button></div>`)}
+function challengeBlock(){return `<div class="sec">CHALLENGES</div><div class="card">`+(S.challenges||[]).map(c=>`<div style="margin-bottom:12px"><b>${esc(c.name)}</b>${c.done?' ✅':''}<br><span class="muted">${esc(c.desc)} · ${c.progress}/${c.target}</span><div class="bar"><i style="width:${Math.round(c.progress/c.target*100)}%"></i></div></div>`).join('')+`<p style="margin:0">Addis Explorer: coming soon.</p></div>`}
+function makePlan(p,level,days,weeks,act){
+  const base={BEGINNER:20,REGULAR:30,EXPERIENCED:40}[level],out=[];
+  for(let w=1;w<=weeks;w++){
+    const rest=weeks>=4&&w%4===0,m=Math.round(base*(1+0.5*(w-1)/Math.max(weeks-1,1))*(rest?0.7:1));
+    const style=act==='RUNNING'&&level==='BEGINNER'&&w<=Math.ceil(weeks/2)?'alternate 1 min easy jog with 2 min walking':'comfortable, conversational pace';
+    out.push(`Week ${w}: ${days} session${days>1?'s':''} × about ${m} min, ${style}.${rest?' Easier recovery week.':''}`);
+  }
+  if(p[1]==='SINGLE_DISTANCE')out[weeks-1]+=` When you feel ready, go for your ${p[0]}.`;
+  return out;
+}
+function wizard(){
+  const w=W||{},o=(a,s)=>a.map(([v,l])=>`<option value="${v}" ${String(s)===String(v)?'selected':''}>${l}</option>`).join('');
+  const q=t=>`<div class="muted" style="margin:4px 0 6px">${t}</div>`;
+  return `<div class="eyebrow">GOAL ASSISTANT</div><h2 style="margin:0 0 14px">Let's plan it</h2>
+  ${q('1. What do you want to achieve?')}<select id="w-goal">${o(Object.keys(PRE).map(k=>[k,PRE[k][0]]),w.goal)}</select>
+  ${q('2. Preferred activity (for routines)')}<select id="w-act">${o([['','Any activity'],...AT.filter(t=>t!=='OTHER').map(t=>[t,al(t)])],w.act)}</select>
+  ${q('3. Current activity level')}<select id="w-level">${o([['BEGINNER','Beginner'],['REGULAR','Regular'],['EXPERIENCED','Experienced']],w.level)}</select>
+  ${q('4. Days per week you can train')}<select id="w-days">${o([1,2,3,4,5,6].map(n=>[n,n]),w.days||3)}</select>
+  ${q('5. Timeframe')}<select id="w-weeks">${o([4,6,8,12].map(n=>[n,n+' weeks']),w.weeks||6)}</select>
+  <button class="btn" data-genplan>${w.plan?'UPDATE PLAN':'CREATE MY PLAN'}</button>
+  ${w.plan?`<div class="card" style="margin-top:16px"><h3>Your plan</h3><p style="color:#e2e8f0">${w.plan.map(esc).join('<br>')}</p><p style="margin:0">General guidance only, not medical advice. Stop if you feel unwell, and talk to a doctor if you are unsure.</p></div><button class="btn" data-savegoal>SAVE THIS GOAL</button>`:''}`;
+}
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-newgoal],[data-genplan],[data-savegoal]');if(!t)return;
+  if(t.dataset.newgoal!==undefined){W=null;openSheet(wizard())}
+  else if(t.dataset.genplan!==undefined){
+    const k=$('w-goal').value,p=PRE[k],act=$('w-act').value,level=$('w-level').value,days=+$('w-days').value,weeks=+$('w-weeks').value;
+    W={goal:k,act,level,days,weeks,plan:makePlan(p,level,days,weeks,p[2]||act)};openSheet(wizard());
+  }else{
+    const p=PRE[W.goal],r=W.goal==='routine',dl=new Date(Date.now()+W.weeks*7*86400e3).toISOString().slice(0,10);
+    t.disabled=true;
+    try{
+      const res=await api('/api/goal',{name:r?`${W.days} days/week for ${W.weeks} weeks`:p[0],goalType:p[1],activityType:p[2]||W.act||null,target:r?W.days*W.weeks:p[3],unit:p[4],deadline:dl,frequency:`${W.days} days/week`,plan:W.plan});
+      toast(res.success?res.message:(res.error||'Could not save'));
+      if(res.success){closeSheet();W=null;await refresh()}else t.disabled=false;
+    }catch(_){toast('Network error');t.disabled=false}
+  }
 });
 
 refresh();
