@@ -23,6 +23,25 @@ try {
   console.error('Could not read public/index.html', e);
 }
 
+const icons = require('./icons');
+const MANIFEST = JSON.stringify({
+  name: 'Addis Active', short_name: 'Addis Active', start_url: '/', scope: '/', display: 'standalone',
+  background_color: '#0a1020', theme_color: '#0a1020',
+  icons: [
+    { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+  ]
+});
+// Network-first service worker: always fetch fresh, fall back to cache when offline. Never caches /api.
+const SW = [
+  "const C='addis-active-v2';",
+  "self.addEventListener('install',()=>self.skipWaiting());",
+  "self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));",
+  "self.addEventListener('fetch',e=>{const u=new URL(e.request.url);",
+  "if(e.request.method!=='GET'||u.origin!==location.origin||u.pathname.startsWith('/api/'))return;",
+  "e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request).then(m=>m||caches.match('/'))))});"
+].join('\n');
+
 const ACTIVITY_TYPES = ['RUNNING', 'WALKING', 'CYCLING', 'FOOTBALL', 'HIKING', 'SWIMMING', 'GYM', 'STRENGTH', 'OTHER'];
 const REAL_STATUSES = new Set(['UPCOMING', 'LIVE', 'COMPLETED']); // DEMO/DRAFT give no XP
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,6 +69,47 @@ function verifyInitData(initData) {
   } catch (e) {
     return null;
   }
+}
+
+// ---- Website sign-in: Telegram Login Widget -> signed session token ----
+const sessionKey = () => crypto.createHmac('sha256', 'aa-session').update(BOT_TOKEN || '').digest();
+function signSession(u) {
+  const body = Buffer.from(JSON.stringify({
+    id: u.id, first_name: u.first_name || null, last_name: u.last_name || null,
+    username: u.username || null, photo_url: u.photo_url || null, exp: Date.now() + 30 * 86400e3
+  })).toString('base64url');
+  return body + '.' + crypto.createHmac('sha256', sessionKey()).update(body).digest('base64url');
+}
+function verifySession(tok) {
+  const [body, sig] = String(tok).split('.');
+  if (!body || !sig) return null;
+  const calc = crypto.createHmac('sha256', sessionKey()).update(body).digest('base64url');
+  const a = Buffer.from(calc), b = Buffer.from(sig);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  try {
+    const p = JSON.parse(Buffer.from(body, 'base64url').toString());
+    return p.exp > Date.now() ? p : null;
+  } catch (e) {
+    return null;
+  }
+}
+function verifyLoginWidget(d) {
+  if (!d || !d.hash || !BOT_TOKEN) return null;
+  const { hash, ...rest } = d;
+  const s = Object.keys(rest).sort().map((k) => `${k}=${rest[k]}`).join('\n');
+  const key = crypto.createHash('sha256').update(BOT_TOKEN).digest();
+  const a = Buffer.from(crypto.createHmac('sha256', key).update(s).digest('hex'), 'hex');
+  const b = Buffer.from(String(hash), 'hex');
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  if (Date.now() / 1000 - Number(d.auth_date || 0) > 86400) return null;
+  return { id: Number(d.id), first_name: d.first_name, last_name: d.last_name, username: d.username, photo_url: d.photo_url };
+}
+// Mini app (signed initData) OR website (signed session token)
+function authTg(req) {
+  const init = verifyInitData(req.headers['x-telegram-init-data']);
+  if (init) return init;
+  const m = /^Bearer (.+)$/.exec(req.headers['authorization'] || '');
+  return m ? verifySession(m[1]) : null;
 }
 
 async function upsertUser(tg) {
@@ -129,7 +189,7 @@ function computeChallenges(records, parts) {
 
 // ---- GET /api/bootstrap ----
 async function bootstrap(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
 
   const [places, acts, comms] = await Promise.all([
     supabase
@@ -208,7 +268,7 @@ async function bootstrap(req, res) {
 
 // ---- POST /api/join ----
 async function join(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
   if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to join.' });
 
   const { activityId } = req.body || {};
@@ -247,7 +307,7 @@ async function join(req, res) {
 
 // ---- POST /api/log ----
 async function logActivity(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
   if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to log activities.' });
 
   const { type, distanceKm, minutes, placeId, performedAt } = req.body || {};
@@ -299,7 +359,7 @@ function hav(a, b) {
   return 2 * R * Math.asin(Math.sqrt(q));
 }
 async function track(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
   if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to track.' });
   const { type, points } = req.body || {};
   if (!ACTIVITY_TYPES.includes(type)) return json(res, 400, { success: false, error: 'Choose an activity type.' });
@@ -366,7 +426,7 @@ async function track(req, res) {
 
 // ---- POST /api/goal ----
 async function createGoal(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
   if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to set goals.' });
   const { name, goalType, activityType, target, unit, deadline, frequency, plan } = req.body || {};
   const t = Number(target);
@@ -391,7 +451,7 @@ async function createGoal(req, res) {
 // ---- GET /api/territory (anonymised: other movers are never named) ----
 const CELL = 0.0025; // degrees, ~275 m
 async function territory(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
   const uid = tgUser ? (await upsertUser(tgUser)).id : null;
   const q = new URL(req.url, 'http://localhost').searchParams;
   const [s, w, n, e] = ['s', 'w', 'n', 'e'].map((k) => Number(q.get(k)));
@@ -410,7 +470,7 @@ async function territory(req, res) {
 
 // ---- GET /api/leaderboard (anonymous: shows zone counts, never names) ----
 async function leaderboard(req, res) {
-  const tgUser = verifyInitData(req.headers['x-telegram-init-data']);
+  const tgUser = authTg(req);
   const uid = tgUser ? (await upsertUser(tgUser)).id : null;
   let rows = [];
   for (let i = 0; i < 20; i++) {
@@ -431,6 +491,14 @@ async function leaderboard(req, res) {
   });
 }
 
+// ---- POST /api/web-login ----
+async function webLogin(req, res) {
+  const u = verifyLoginWidget(req.body);
+  if (!u) return json(res, 401, { success: false, error: 'Sign-in could not be verified.' });
+  await upsertUser(u);
+  return json(res, 200, { success: true, token: signSession(u) });
+}
+
 // ---- Telegram bot (onboarding lives in onboarding.js) ----
 require('./onboarding')(bot, { supabase, upsertUser, appUrl: APP_URL });
 
@@ -439,6 +507,8 @@ module.exports = async (req, res) => {
   const p = new URL(req.url, 'http://localhost').pathname;
   try {
     if (p === '/api/bootstrap' && req.method === 'GET') return await bootstrap(req, res);
+    if (p === '/api/config' && req.method === 'GET') return json(res, 200, { success: true, botUsername: process.env.BOT_USERNAME || null });
+    if (p === '/api/web-login' && req.method === 'POST') return await webLogin(req, res);
     if (p === '/api/join' && req.method === 'POST') return await join(req, res);
     if (p === '/api/log' && req.method === 'POST') return await logActivity(req, res);
     if (p === '/api/track' && req.method === 'POST') return await track(req, res);
@@ -454,6 +524,23 @@ module.exports = async (req, res) => {
       return res.status(200).send('OK');
     }
 
+    if (req.method === 'GET') {
+      if (p === '/manifest.webmanifest') {
+        res.setHeader('Content-Type', 'application/manifest+json');
+        res.setHeader('Cache-Control', 'no-cache');
+        return res.status(200).send(MANIFEST);
+      }
+      if (p === '/sw.js') {
+        res.setHeader('Content-Type', 'application/javascript');
+        res.setHeader('Cache-Control', 'no-cache');
+        return res.status(200).send(SW);
+      }
+      if (p === '/icon-192.png' || p === '/icon-512.png') {
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.status(200).send(Buffer.from(icons[p.includes('512') ? 512 : 192], 'base64'));
+      }
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(INDEX_HTML);
   } catch (err) {
