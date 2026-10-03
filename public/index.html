@@ -73,10 +73,34 @@ details summary{cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;
 .tab{font-size:9.5px}.tab.ex i{width:54px;height:54px;margin:-26px auto 5px}.tab.ex i svg{width:25px;height:25px}
 .tab.ex.ter i{background:linear-gradient(135deg,#f5c518,#d97706);box-shadow:0 8px 22px rgba(245,197,24,.45)}
 #map{height:56vh}
+html{background:#060b17}
+body{max-width:560px;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.55)}
+.nav{left:50%;right:auto;width:min(536px,calc(100% - 24px));transform:translateX(-50%)}
+#sheet{left:50%;right:auto;width:100%;max-width:560px;transform:translateX(-50%)}
+#toast{left:50%;right:auto;width:min(528px,calc(100% - 32px));transform:translateX(-50%)}
+.tab{white-space:nowrap}.tab.ex{flex:1.35;font-size:9px}
+.tab.ex.ter i{display:block}
+#map{height:40vh;min-height:260px}
+.icon{background:var(--s2);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:12px;font-size:15px;cursor:pointer}
+#map{height:42vh}
+#splash{position:fixed;inset:0;background:var(--bg);z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s}
+#splash .sb{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#078930 0 33.3%,#fcdd09 33.3% 66.6%,#da121a 66.6%)}
+#splash .sl{font-size:44px;background:rgba(245,197,24,.12);border:1px solid rgba(245,197,24,.4);border-radius:22px;padding:14px 18px;margin-bottom:16px}
+#splash .st{font-size:22px;font-weight:800;letter-spacing:1.5px}
+#splash .ss{font-size:10px;color:var(--gold);letter-spacing:1.2px;margin-top:8px;font-weight:700}
+html{background:#070b16}
+@media(min-width:700px){
+  body{max-width:520px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+  .nav{left:50%;right:auto;width:496px;transform:translateX(-50%)}
+  #sheet{inset:0 auto 0 50%;width:520px;transform:translateX(-50%)}
+  #toast{left:50%;right:auto;width:480px;transform:translateX(-50%)}
+}
 </style>
 </head>
 <body>
-<div class="top"><h1>🇪🇹 Addis Active</h1><div class="pill" id="xp">…</div></div>
+<div id="splash"><div class="sb"></div><div class="sl">⚡</div><div class="st">ADDIS ACTIVE</div><div class="ss">DISCOVER ADDIS · MOVE ADDIS · CONNECT ADDIS</div></div>
+<div id="offline" style="display:none;background:#fbbf24;color:#000;text-align:center;font-size:12px;font-weight:700;padding:6px">Offline: saved screens only. Saving moves needs internet.</div>
+<div class="top"><h1>🇪🇹 Addis Active</h1><div style="display:flex;gap:8px;align-items:center"><button class="icon" data-search aria-label="Search">🔍</button><div class="pill" id="xp">…</div></div></div>
 <div id="view"><div class="card"><p>Loading Addis…</p></div></div>
 <div id="sheet"></div>
 <div id="toast"></div>
@@ -85,7 +109,7 @@ details summary{cursor:pointer;color:var(--gold);font-size:12px;font-weight:700;
 <script>
 const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
 const S = {me:null,places:[],activities:[],communities:[],joined:new Set(),records:[],tab:'home',q:'',type:'ALL',act:'ALL',err:null};
-const TABS=[['home',`<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,'Home'],['community',`<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></svg>`,'Community'],['explore',`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>`,'Explore'],['territory',`<svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><circle cx="12" cy="12" r="2.6"/></svg>`,'Territory'],['track',`<svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>`,'Track'],['journey',`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>`,'Journey']];
+const TABS=[['home',`<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,'Home'],['community',`<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.6 0 4.5 1.8 4.5 4.5"/></svg>`,'Community'],['explore',`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>`,'Explore Addis'],['territory',`<svg viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><circle cx="12" cy="12" r="2.6"/></svg>`,'Territory'],['track',`<svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>`,'Track'],['journey',`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>`,'Journey']];
 const PT={PARK:'Park',ROUTE:'Route',FACILITY:'Facility',ACTIVITY_AREA:'Activity area',COMMUNITY_LOCATION:'Community location',EVENT_LOCATION:'Event location'};
 const ACT={RUNNING:['🏃','Run'],WALKING:['🚶','Walk'],CYCLING:['🚴','Bike'],HIKING:['🥾','Hike'],SWIMMING:['🏊','Swim'],FOOTBALL:['⚽','Football'],STRENGTH:['🏋️','Outdoor strength'],GYM:['💪','Gym'],OTHER:['✨','Other']};
 const AT=Object.keys(ACT);
@@ -108,6 +132,7 @@ async function refresh(){
     Object.assign(S,{me:d.me,places:d.places,activities:d.activities,communities:d.communities,records:d.records,goals:d.goals||[],challenges:d.challenges||[],joined:new Set(d.joined),err:null});
   }catch(e){S.err=e.message}
   render();
+  hideSplash();
 }
 
 /* ---------- helpers ---------- */
@@ -170,8 +195,8 @@ function explore(){
   const cnt=t=>S.places.filter(p=>(p.activity_types||[]).includes(t)).length+S.activities.filter(a=>a.category===t).length+S.communities.filter(c=>c.activity_type===t).length;
   const tiles=Object.keys(ACT).filter(t=>t!=='OTHER').map(t=>`<div class="tile ${S.act===t?'on':''}" data-act="${t}"><span class="te">${ACT[t][0]}</span><b>${ACT[t][1]}</b><small>${cnt(t)} listed</small></div>`).join('');
   const chips=['ALL',...Object.keys(PT)].map(t=>`<div class="chip ${S.type===t?'on':''}" data-type="${t}">${t==='ALL'?'All places':PT[t]}</div>`).join('');
-  return `<div class="exh"><div class="eyebrow">DISCOVER ADDIS</div><h2>What do you want to do today?</h2></div>
-  <input id="q" placeholder="Search places, activities, communities" value="${esc(S.q)}" autocomplete="off">
+  return `<div class="exh"><div class="eyebrow">DISCOVER ADDIS · MOVE ADDIS</div><h2>Explore Addis</h2><p class="muted" style="margin:-6px 0 14px">What do you want to do today?</p></div>
+  <input id="q" placeholder="Search Addis: places, activities, clubs" value="${esc(S.q)}" autocomplete="off">
   <div class="tiles">${tiles}</div><div class="chips">${chips}</div><div id="results"></div>`;
 }
 function results(){
@@ -205,7 +230,7 @@ function track(){
     const m=r.duration_seconds?Math.round(r.duration_seconds/60)+' min':'';
     const d=r.distance_km!=null?Number(r.distance_km)+' km':'';
     const pl=r.place_id&&placeById(r.place_id);
-    return `<div class="row"><span><b>${esc(al(r.type))}</b><br><span class="muted">${[d,m].filter(Boolean).join(' · ')}${pl?' · '+esc(pl.name):''}</span></span><span class="muted">${new Date(r.performed_at).toLocaleDateString()}</span></div>`}).join('')+`</div>`;
+    return `<div class="row"><span><b>${esc(al(r.type))}</b> ${r.source==='gps'?'<span class="badge ok">GPS</span>':'<span class="badge">MANUAL</span>'}<br><span class="muted">${[d,m].filter(Boolean).join(' · ')}${pl?' · '+esc(pl.name):''}</span></span><span class="muted">${new Date(r.performed_at).toLocaleDateString()}</span></div>`}).join('')+`</div>`;
 }
 
 
@@ -215,7 +240,7 @@ function journey(){
   const explored=new Set(S.records.filter(r=>r.place_id).map(r=>r.place_id)).size;
   const B=[['First Move',S.records.length>0],['First Run',has('RUNNING')],['First Walk',has('WALKING')],['First Ride',has('CYCLING')],['Addis Explorer (3 places)',explored>=3]];
   const mine=S.activities.filter(a=>S.joined.has(a.id));
-  let o=`<div class="card hero"><h2 style="margin:0 0 4px">${esc(S.me.first_name||'Explorer')}</h2><p style="margin:0;color:#cbd5e1">${S.me.username?'@'+esc(S.me.username)+' · ':''}Level ${S.me.level} · ${S.me.xp} XP</p></div>`;
+  let o=`<div class="card hero" style="display:flex;gap:14px;align-items:center">${S.me.photo?`<img src="${esc(S.me.photo)}" alt="" style="width:56px;height:56px;border-radius:50%;border:2px solid var(--gold);object-fit:cover">`:''}<div><h2 style="margin:0 0 4px">${esc(S.me.first_name||'Explorer')}</h2><p style="margin:0;color:#cbd5e1">${S.me.username?'@'+esc(S.me.username)+' · ':''}Level ${S.me.level} · ${S.me.xp} XP</p></div></div>`;
   o+=goalsBlock()+challengeBlock();
   o+=`<div class="sec">BADGES</div><div class="card">`+B.map(([n,ok])=>`<div class="row ${ok?'':'lock'}"><span>${ok?'🏅':'🔒'} ${n}</span></div>`).join('')+`</div>`;
   o+=`<div class="sec">EXPLORED</div><div class="card"><p style="margin:0">${explored?explored+' Addis location'+(explored>1?'s':'')+' logged':'Start exploring Addis.'}</p></div>`;
@@ -253,7 +278,7 @@ function commSheet(id){
 function render(){
   if(!S.signedIn&&!S.err){$('xp').textContent='';$('nav').innerHTML='';$('view').innerHTML=gate();if(!S.me&&!tg.initData)mountLogin();return}
   $('xp').textContent=S.me?`LVL ${S.me.level} • ${S.me.xp} XP`:'Open in Telegram';
-  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''} ${k==='explore'?'ex':k==='territory'?'ex ter':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
+  $('nav').innerHTML=TABS.map(([k,i,l])=>`<div class="tab ${S.tab===k?'on':''} ${k==='explore'?'ex':''}" data-tab="${k}"><i>${i}</i>${l}</div>`).join('');
   if(S.err){$('view').innerHTML=`<div class="card"><h3>Couldn't load</h3><p>${esc(S.err)}</p><button class="btn" data-retry>Try again</button></div>`;return}
   const f={home,explore,territory,track,community,journey}[S.tab];
   $('view').innerHTML=f();
@@ -384,7 +409,7 @@ function goalHome(){
   const g=(S.goals||[]).find(x=>x.status==='ACTIVE'&&!x.done);
   return `<div class="sec">YOUR GOAL</div><div class="card">`+(g?goalBody(g):`<h3>What do you want to achieve?</h3><p>Answer 5 quick questions and get a realistic plan.</p><button class="btn" data-newgoal>SET A GOAL</button>`)+`</div>`;
 }
-function goalsBlock(){const gs=S.goals||[];return `<div class="sec">GOALS</div>`+(gs.length?gs.map(g=>`<div class="card">${goalBody(g)}</div>`).join('')+`<button class="btn ghost" data-newgoal>+ NEW GOAL</button>`:`<div class="card"><h3>What do you want to achieve?</h3><button class="btn" data-newgoal>SET A GOAL</button></div>`)}
+function goalsBlock(){const gs=S.goals||[];return `<div class="sec">GOALS</div>`+(gs.length?gs.map(g=>`<div class="card">${goalBody(g)}<button class="btn ghost" data-delgoal="${g.id}" style="margin-top:12px">Remove goal</button></div>`).join('')+`<button class="btn ghost" data-newgoal>+ NEW GOAL</button>`:`<div class="card"><h3>What do you want to achieve?</h3><button class="btn" data-newgoal>SET A GOAL</button></div>`)}
 function challengeBlock(){return `<div class="sec">CHALLENGES</div><div class="card">`+(S.challenges||[]).map(c=>`<div style="margin-bottom:12px"><b>${esc(c.name)}</b>${c.done?' ✅':''}<br><span class="muted">${esc(c.desc)} · ${c.progress}/${c.target}</span><div class="bar"><i style="width:${Math.round(c.progress/c.target*100)}%"></i></div></div>`).join('')+`<p style="margin:0">Addis Explorer: coming soon.</p></div>`}
 function makePlan(p,level,days,weeks,act){
   const base={BEGINNER:20,REGULAR:30,EXPERIENCED:40}[level],out=[];
@@ -429,7 +454,7 @@ document.addEventListener('click',async e=>{
 let MAP=null,LAYER=null;
 function territoryCard(){
   const n=S.me?.territory||0;
-  return `<div class="sec">YOUR TERRITORY</div><div class="card"><h3>${n} zone${n===1?'':'s'} held</h3><p>Move with GPS to claim map zones. Come back on different days and push your pace to hold them.</p><button class="btn" data-map>OPEN TERRITORY MAP</button></div>`;
+  return `<div class="card item" data-map style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px"><span><b>${n} zone${n===1?'':'s'} held</b><br><span class="muted" style="font-size:12px">Territory · claim zones with GPS moves</span></span><span style="color:var(--gold);font-weight:800">OPEN ›</span></div>`;
 }
 function openMap(){S.tab='territory';closeSheet();render();window.scrollTo(0,0)}
 document.addEventListener('click',e=>{if(e.target.closest('[data-map]'))openMap()});
@@ -445,7 +470,7 @@ function streakDays(){
 }
 function territory(){
   const held=S.me?.territory||0;
-  return `<div class="exh"><div class="eyebrow">TERRITORY</div><h2>Claim Addis, one zone at a time</h2></div>
+  return `<div class="eyebrow">TERRITORY</div><h3 style="margin:0 0 12px;font-size:18px">Claim zones as you move</h3>
   <div class="tiles"><div class="tile"><span class="te">${held}</span><b>Zones held</b></div><div class="tile"><span class="te">${streakDays()}</span><b>Day streak</b><small>GPS moves</small></div><div class="tile"><span class="te" id="t-rank">–</span><b>Your rank</b><small id="t-rank-s">&nbsp;</small></div></div>
   <div id="map"></div>
   <button class="btn ghost" data-recenter style="margin-top:10px">📍 CENTER ON ME</button>
@@ -501,6 +526,23 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-signout]')){try{localStorage.removeItem('aa_token')}catch(_){}S.me=null;S.signedIn=false;render()}
 });
 if('serviceWorker' in navigator&&!tg.initData)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-delgoal]');if(!t)return;
+  const ok=await new Promise(r=>tg.initData&&tg.showConfirm?tg.showConfirm('Remove this goal?',r):r(confirm('Remove this goal?')));
+  if(!ok)return;
+  try{const r=await api('/api/goal-delete',{id:t.dataset.delgoal});toast(r.success?'Goal removed':(r.error||'Could not remove'));if(r.success)await refresh()}
+  catch(_){toast('Network error')}
+});
+
+/* ---------- from the old PWA: search shortcut, offline banner, splash ---------- */
+function hideSplash(){const s=$('splash');if(s){s.style.opacity=0;setTimeout(()=>s&&s.remove(),450)}}
+setTimeout(hideSplash,6000);
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-search]')&&S.signedIn){S.tab='explore';closeSheet();render();setTimeout(()=>{const q=$('q');if(q)q.focus()},80)}
+});
+const offl=()=>{$('offline').style.display=navigator.onLine?'none':'block'};
+window.addEventListener('online',offl);window.addEventListener('offline',offl);offl();
 
 refresh();
 </script>
