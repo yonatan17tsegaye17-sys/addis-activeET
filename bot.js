@@ -360,6 +360,41 @@ async function logActivity(req, res) {
   return json(res, 200, { success: true, message: 'Activity saved.' });
 }
 
+
+// ---- Territory loops (INTVL-style) ----
+const CELL_KM2 = 0.076; // ~275 m x 276 m
+function insideCells(poly) {
+  const xs = poly.map((p) => p.lng / CELL), ys = poly.map((p) => p.lat / CELL);
+  const x0 = Math.floor(Math.min(...xs)), x1 = Math.floor(Math.max(...xs)), y0 = Math.floor(Math.min(...ys)), y1 = Math.floor(Math.max(...ys));
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) > 6000) return null;
+  const out = [];
+  for (let cx = x0; cx <= x1; cx++) for (let cy = y0; cy <= y1; cy++) {
+    const px = cx + 0.5, py = cy + 0.5;
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = xs[i], yi = ys[i], xj = xs[j], yj = ys[j];
+      if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    if (inside) out.push(cx + ',' + cy);
+    if (out.length > 800) return null; // too large to count as one loop
+  }
+  return out;
+}
+async function ownersIn(rows) {
+  const m = new Map();
+  if (!rows.length) return m;
+  const xs = rows.map((r) => r.cx), ys = rows.map((r) => r.cy);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  for (let i = 0; i < 15; i++) {
+    const { data, error } = await supabase.from('cell_owners').select('cx,cy,user_id')
+      .gte('cx', x0).lte('cx', x1).gte('cy', y0).lte('cy', y1).order('cx').order('cy').range(i * 1000, i * 1000 + 999);
+    if (error) throw error;
+    for (const c of data) m.set(c.cx + ',' + c.cy, c.user_id);
+    if (data.length < 1000) break;
+  }
+  return m;
+}
+
 // ---- POST /api/track (GPS) ----
 const cleanCaption = (c) => (typeof c === 'string' && c.trim() ? c.trim().slice(0, 140) : null);
 const MAXV = { RUNNING: 9, WALKING: 4, HIKING: 4, CYCLING: 20, FOOTBALL: 9, SWIMMING: 3, GYM: 9, STRENGTH: 9, OTHER: 9 }; // max m/s
@@ -404,7 +439,7 @@ async function track(req, res) {
   if (dist < 50) return json(res, 400, { success: false, error: 'Too short to save (under 50 m).' });
   const step = Math.ceil(pts.length / 500);
   const user = await upsertUser(tgUser);
-  const { error } = await supabase.from('activity_records').insert({
+  const ins = await supabase.from('activity_records').insert({
     user_id: user.id,
     type,
     distance_km: Number((dist / 1000).toFixed(2)),
@@ -414,8 +449,9 @@ async function track(req, res) {
     shared: shared !== false,
     caption: cleanCaption(caption),
     performed_at: new Date(pts[0].t).toISOString()
-  });
-  if (error) throw error;
+  }).select('id').single();
+  if (ins.error) throw ins.error;
+  const recId = ins.data.id;
   // Claim map zones from the validated part of the track
   const cells = new Set();
   for (const [a, c2, d] of okSegs) {
@@ -426,15 +462,50 @@ async function track(req, res) {
     }
     if (cells.size >= 400) break;
   }
+  // Closed loop (finish within 250 m of the start): everything inside is claimed too
+  let loop = false;
+  const first = pts[0], last = pts[pts.length - 1];
+  if (dist >= 400 && hav(first, last) <= 250) {
+    const st = Math.ceil(pts.length / 300);
+    const poly = pts.filter((_, i) => i % st === 0);
+    poly.push(last);
+    const inn = insideCells(poly);
+    if (inn) { loop = true; for (const c of inn) cells.add(c); }
+  }
   const intensity = Math.min(5, 1 + Math.floor(((dist / secs) * 3.6) / 4));
   const day = etDay(new Date(pts[0].t).toISOString());
   const rows = [...cells].map((c) => { const [cx, cy] = c.split(',').map(Number); return { user_id: user.id, cx, cy, day, intensity }; });
-  let zones = 0;
+  let zones = 0, taken = 0, stolen = 0;
   if (rows.length) {
+    let before = new Map();
+    try { before = await ownersIn(rows); } catch (e) { console.error('owners before', e); }
     const cr = await supabase.from('cell_visits').upsert(rows, { onConflict: 'user_id,cx,cy,day' });
-    if (cr.error) console.error('cell_visits', cr.error); else zones = rows.length;
+    if (cr.error) console.error('cell_visits', cr.error);
+    else {
+      zones = rows.length;
+      try {
+        const after = await ownersIn(rows);
+        const victims = {};
+        for (const r of rows) {
+          const k = r.cx + ',' + r.cy;
+          if (after.get(k) === user.id && before.get(k) !== user.id) {
+            taken++;
+            const v = before.get(k);
+            if (v) { stolen++; victims[v] = (victims[v] || 0) + 1; }
+          }
+        }
+        const ev = Object.entries(victims).map(([v, n]) => ({ taker_id: user.id, victim_id: v, cells: n, area_km2: Number((n * CELL_KM2).toFixed(2)) }));
+        if (ev.length) await supabase.from('territory_events').insert(ev);
+      } catch (e) { console.error('territory events', e); }
+    }
   }
-  return json(res, 200, { success: true, message: `Saved: ${(dist / 1000).toFixed(2)} km in ${Math.round(secs / 60)} min. ${zones} map zone${zones === 1 ? '' : 's'} visited.` });
+  const area = Number((zones * CELL_KM2).toFixed(2));
+  await supabase.from('activity_records').update({ area_km2: area, zones_stolen: stolen }).eq('id', recId);
+  return json(res, 200, {
+    success: true,
+    message: `Saved: ${(dist / 1000).toFixed(2)} km in ${Math.round(secs / 60)} min.`,
+    result: { km: Number((dist / 1000).toFixed(2)), mins: Math.round(secs / 60), kmh: Number(((dist / secs) * 3.6).toFixed(1)), loop, zones, taken, stolen, area }
+  });
 }
 
 // ---- POST /api/goal ----
@@ -504,7 +575,7 @@ async function feed(req, res) {
   const since = new Date(Date.now() - 30 * 86400e3).toISOString();
   const { data, error } = await supabase
     .from('activity_records')
-    .select('id,user_id,type,distance_km,duration_seconds,source,caption,performed_at,gps_track,place_id,users:user_id(first_name,photo_url)')
+    .select('id,user_id,type,distance_km,duration_seconds,source,caption,performed_at,gps_track,place_id,area_km2,zones_stolen,users:user_id(first_name,photo_url)')
     .eq('shared', true)
     .gte('performed_at', since)
     .order('performed_at', { ascending: false })
@@ -532,6 +603,8 @@ async function feed(req, res) {
       at: r.performed_at,
       place_id: r.place_id,
       route: routeShape(r.gps_track),
+      area: Number(r.area_km2 || 0),
+      stolen: r.zones_stolen || 0,
       likes: likes.filter((l) => l.record_id === r.id).length,
       liked: likes.some((l) => l.record_id === r.id && l.user_id === uid) ? 1 : 0
     }))
@@ -565,6 +638,33 @@ async function unshare(req, res) {
   const { error } = await supabase.from('activity_records').update({ shared: false }).eq('id', recordId).eq('user_id', u.id);
   if (error) throw error;
   return json(res, 200, { success: true });
+}
+
+
+// ---- GET /api/territory-events (who took my zones / whose zones I took, last 14 days) ----
+async function terrEvents(req, res) {
+  const tgUser = authTg(req);
+  if (!tgUser) return json(res, 200, { success: true, events: [] });
+  const u = await upsertUser(tgUser);
+  const since = new Date(Date.now() - 14 * 86400e3).toISOString();
+  const { data, error } = await supabase
+    .from('territory_events')
+    .select('taker_id,victim_id,cells,area_km2,created_at,taker:taker_id(first_name),victim:victim_id(first_name)')
+    .or(`taker_id.eq.${u.id},victim_id.eq.${u.id}`)
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return json(res, 200, {
+    success: true,
+    events: data.map((e) => ({
+      dir: e.victim_id === u.id ? 'lost' : 'took',
+      name: (e.victim_id === u.id ? e.taker : e.victim)?.first_name || 'Another mover',
+      cells: e.cells,
+      area: Number(e.area_km2),
+      at: e.created_at
+    }))
+  });
 }
 
 // ---- GET /api/leaderboard (anonymous: shows zone counts, never names) ----
@@ -666,6 +766,7 @@ module.exports = async (req, res) => {
     if (p === '/api/territory' && req.method === 'GET') return await territory(req, res);
     if (p === '/api/leaderboard' && req.method === 'GET') return await leaderboard(req, res);
     if (p === '/api/feed' && req.method === 'GET') return await feed(req, res);
+    if (p === '/api/territory-events' && req.method === 'GET') return await terrEvents(req, res);
     if (p === '/api/like' && req.method === 'POST') return await like(req, res);
     if (p === '/api/unshare' && req.method === 'POST') return await unshare(req, res);
 
