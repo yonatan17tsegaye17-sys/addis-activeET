@@ -176,6 +176,27 @@ html{background:#070b16}
 .dz div{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer}
 .dz div.ok{border-color:rgba(34,197,94,.6);background:rgba(34,197,94,.07)}
 .dz .de{font-size:26px}.dz b{display:block;font-size:13px;margin:4px 0 2px}.dz small{display:block;color:var(--muted);font-size:11px;line-height:1.35}.dz em{display:block;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.5px;margin-top:6px;color:var(--muted)}.dz .ok em{color:var(--green)}
+
+/* ---- v4 INTVL-style territory ---- */
+.live{background:#f8fafc;color:#0a1020;border-radius:22px;overflow:hidden;margin-bottom:14px;border:1px solid var(--line)}
+#lmap{height:300px;background:#0d1730}
+.live .lp{padding:14px 16px 16px}
+.live .bigkm{font-size:46px;font-weight:900;letter-spacing:-1px;line-height:1}
+.live .bigkm small{font-size:16px;font-weight:800;color:#64748b;margin-left:4px}
+.live .cap2{display:inline-block;margin:6px 0 12px;font-size:10px;font-weight:800;letter-spacing:.8px;color:#15803d;background:#dcfce7;border-radius:8px;padding:4px 8px}
+.live .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.live .g3 b{display:block;font-size:20px;font-weight:800}.live .g3 small{font-size:10px;color:#64748b;font-weight:800;letter-spacing:.5px}
+.live .btn{background:#0a2a14;box-shadow:none}
+.live .btn.ghost{background:transparent;border:1px solid #cbd5e1;color:#0a1020}
+.rs{text-align:left;padding:8px 2px}
+.rs h1{font-size:38px;line-height:1.02;margin:10px 0 8px;font-weight:900;font-style:italic;letter-spacing:-1px;color:#a3e635;text-transform:uppercase}
+.rs .st3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.rs .st3 div{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:12px 6px;text-align:center}.rs .st3 b{display:block;font-size:20px}.rs .st3 small{font-size:10px;color:var(--muted);font-weight:800}
+.ev{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}.ev:last-child{border:0}
+.ev .ei{flex:none;width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.ev.lost .ei{background:rgba(239,68,68,.16)}.ev.took .ei{background:rgba(163,230,53,.16)}
+.ev small{display:block;color:var(--muted);font-size:11px}
+.lg{display:flex;gap:16px;font-size:12px;color:var(--muted);margin:10px 2px 0}
 </style>
 </head>
 <body>
@@ -214,7 +235,7 @@ async function refresh(){
   }catch(e){S.err=e.message}
   render();
   hideSplash();
-  if(S.signedIn!==false)loadFeed();
+  if(S.signedIn!==false){loadFeed();loadTerr()}
 }
 
 /* ---------- helpers ---------- */
@@ -285,9 +306,10 @@ function distTxt(m){return m<950?Math.round(m/10)*10+' m':(m/1000).toFixed(1)+' 
 function placeDist(pl){return S.loc&&pl&&pl.latitude!=null&&pl.longitude!=null?hav(S.loc,{lat:pl.latitude,lng:pl.longitude}):null}
 function tuCard(){
   const held=S.me?.territory||0,w=S.me?.week||{zones:0,days:0,points:0},st=streakDays();
-  const msg=!S.me?'Open from Telegram to claim zones.':held?(w.zones?`You visited ${w.zones} zone${w.zones===1?'':'s'} this week. Keep going to hold them.`:'No visits this week yet. Zones fade after 30 days without visits.'):'Track a GPS move to claim your first zone.';
+  const msg=!S.me?'Open from Telegram to claim zones.':held?(w.zones?`You visited ${w.zones} zone${w.zones===1?'':'s'} this week. Keep going to hold them.`:'No visits this week yet. Zones fade after 30 days without visits.'):'Run a loop with GPS to capture your first territory.';
   return `<div class="tu"><div class="eyebrow">TERRITORY UPDATE</div><div class="big">${held}</div><p class="sub">zone${held===1?'':'s'} held · ${msg}</p>
   <div class="stats3"><div><b>${w.zones}</b><small>ZONES THIS WEEK</small></div><div><b>${w.points}</b><small>WEEK POINTS</small></div><div><b>${st}</b><small>DAY STREAK</small></div></div>
+  ${(S.terr||[]).length?`<div style="position:relative;margin:-4px 0 14px;background:rgba(10,16,32,.55);border:1px solid var(--line);border-radius:14px;padding:2px 12px">${evRows(S.terr,2)}</div>`:''}
   <div style="display:flex;gap:10px;align-items:center;position:relative"><button class="btn" data-map style="flex:1">OPEN MAP</button><span class="cd">⏱ ${seasonLeft()}<br><span style="color:var(--muted);font-weight:600">season left</span></span></div></div>`;
 }
 function eventCard(a){
@@ -310,6 +332,7 @@ function postCard(p){
   return `<div class="post"><div class="ph-h">${p.photo?`<img class="av" src="${esc(p.photo)}" alt="">`:`<div class="av">${esc(init)}</div>`}<div><b>${p.mine?'You':esc(p.name)}</b><small>${ago(p.at)}${pl?' · '+esc(pl.name):''} · ${p.source==='gps'?'GPS':'Self-reported'}</small></div></div>
   ${p.caption?`<div class="cap">${esc(p.caption)}</div>`:''}<h3>${a[0]} ${esc(a[1])}</h3>
   <div class="pstats"><div><b>${p.km!=null?p.km.toFixed(2):'–'}</b><small>KM</small></div><div><b>${fmtT(p.secs)}</b><small>TIME</small></div><div><b>${pace}</b><small>${fast?'SPEED':'PACE'}</small></div></div>
+  ${p.area>0?`<div class="cap" style="padding-top:10px;color:var(--green);font-weight:700">🏴 ${p.area} km² of territory${p.stolen?' · stole '+p.stolen+' zone'+(p.stolen===1?'':'s'):''}</div>`:''}
   ${p.route?`<svg class="route" viewBox="-6 -6 112 112" preserveAspectRatio="xMidYMid meet"><polyline points="${p.route}"/></svg>`:`<div class="noroute">${a[0]}</div>`}
   <div class="pact"><button data-like="${p.id}" class="${p.liked?'on':''}">${p.liked?'❤️':'🤍'} ${p.likes||''}</button>${p.mine?`<span class="sp"></span><button data-unshare="${p.id}" style="font-size:11px">Remove from feed</button>`:''}</div></div>`;
 }
@@ -462,6 +485,7 @@ function render(){
   $('view').innerHTML=f();
   if(S.tab==='explore')results();
   if(S.tab==='territory')setTimeout(initTMap,50);
+  if(S.tab==='track'&&G.on)setTimeout(()=>{initLive();gTick()},50);
 }
 
 document.addEventListener('click',async e=>{
@@ -541,9 +565,43 @@ function trackerCard(){
     const opts=AT.filter(t=>t!=='OTHER').map(t=>`<option value="${t}" ${G.type===t?'selected':''}>${ACT[t][0]} ${al(t)}</option>`).join('');
     return `<div class="card hero"><div class="eyebrow">GPS TRACKER</div><h3 style="color:#fff">Track a move</h3><p style="color:#cbd5e1">${NATIVE?'You can lock your screen: tracking keeps running and a notification shows while it is active.':'Keep the app open and the screen on while you move. Tracking cannot run with the screen locked.'}</p>${G.err?`<p style="color:#fca5a5">${esc(G.err)}</p>`:''}<select id="g-type">${opts}</select><input id="g-cap" maxlength="140" placeholder="Caption for the feed (optional)" value="${esc(G.cap||'')}"><label class="chk"><input type="checkbox" id="g-share" ${G.share===false?'':'checked'}> Share this move to the community feed</label><button class="btn" data-gstart>START</button></div>`;
   }
-  return `<div class="card hero"><div class="eyebrow">TRACKING · ${esc(al(G.type))}</div><h2 id="g-stats" style="margin:4px 0 14px;font-size:30px">0.00 km · 0:00</h2><button class="btn" data-gstop>STOP &amp; SAVE</button><button class="btn ghost" data-gdiscard style="margin-top:8px">DISCARD</button></div>`;
+  return `<div class="live"><div id="lmap"></div><div class="lp"><div class="eyebrow" style="color:#15803d">TRACKING · ${esc(al(G.type))}</div><div class="bigkm"><span id="g-km">0.00</span><small>KM</small></div><span class="cap2" id="g-cap2">RUN A LOOP TO CAPTURE TERRITORY</span>
+  <div class="g3"><div><b id="g-dur">0:00</b><small>DURATION</small></div><div><b id="g-spd">0.0</b><small>KM/H</small></div><div><b id="g-ter">0</b><small>ZONES</small></div></div>
+  <button class="btn" data-gstop>FINISH &amp; CLAIM</button><button class="btn ghost" data-gdiscard style="margin-top:8px">Discard</button></div></div>`;
 }
-function gTick(){const el=$('g-stats');if(el){const s=Math.floor((Date.now()-G.t0)/1000);el.textContent=(G.dist/1000).toFixed(2)+' km · '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}}
+function loopInfo(){
+  if(G.pts.length<4||G.dist<400)return {closed:false,toStart:null,zones:0};
+  const f=G.pts[0],l=G.pts[G.pts.length-1],d=hav(f,l);
+  if(d>250)return {closed:false,toStart:d,zones:0};
+  const key=G.pts.length;if(loopInfo.k===key)return loopInfo.v;
+  const st=Math.ceil(G.pts.length/300),poly=G.pts.filter((_,i)=>i%st===0);poly.push(l);
+  const xs=poly.map(p=>p.lng/0.0025),ys=poly.map(p=>p.lat/0.0025);
+  const x0=Math.floor(Math.min(...xs)),x1=Math.floor(Math.max(...xs)),y0=Math.floor(Math.min(...ys)),y1=Math.floor(Math.max(...ys));
+  let n=0;
+  if((x1-x0+1)*(y1-y0+1)<=6000)for(let cx=x0;cx<=x1;cx++)for(let cy=y0;cy<=y1;cy++){const px=cx+.5,py=cy+.5;let ins=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){if((ys[i]>py)!==(ys[j]>py)&&px<(xs[j]-xs[i])*(py-ys[i])/(ys[j]-ys[i])+xs[i])ins=!ins}if(ins)n++}
+  loopInfo.k=key;loopInfo.v={closed:true,toStart:d,zones:n};return loopInfo.v;
+}
+let LM=null,LPL=null,LMK=null;
+function initLive(){
+  if(!$('lmap')||!window.L)return;
+  if(LM){LM.remove();LM=null}
+  const l=G.pts[G.pts.length-1]||{lat:9.03,lng:38.76};
+  LM=L.map('lmap',{zoomControl:false}).setView([l.lat,l.lng],16);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(LM);
+  LPL=L.polyline(G.pts.map(p=>[p.lat,p.lng]),{color:'#22c55e',weight:5}).addTo(LM);
+  LMK=L.circleMarker([l.lat,l.lng],{radius:8,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1}).addTo(LM);
+  setTimeout(()=>LM&&LM.invalidateSize(),150);
+}
+function gTick(){
+  if(!$('g-km'))return;
+  const s=Math.floor((Date.now()-G.t0)/1000),li=loopInfo();
+  $('g-km').textContent=(G.dist/1000).toFixed(2);
+  $('g-dur').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  $('g-spd').textContent=s>5?((G.dist/s)*3.6).toFixed(1):'0.0';
+  $('g-ter').textContent=li.closed?li.zones:0;
+  $('g-cap2').textContent=li.closed?`LOOP CLOSED · ${li.zones} ZONES (~${(li.zones*0.076).toFixed(2)} KM²) TO CAPTURE`:(li.toStart!=null&&G.dist>=400?`${Math.round(li.toStart)} M FROM YOUR START · CLOSE THE LOOP`:'RUN A LOOP TO CAPTURE TERRITORY');
+  if(LM&&G.pts.length){const l=G.pts[G.pts.length-1];LPL.setLatLngs(G.pts.map(p=>[p.lat,p.lng]));LMK.setLatLng([l.lat,l.lng]);LM.panTo([l.lat,l.lng])}
+}
 function gPoll(){geoOnce().then(p=>{G.errN=0;addPoint(p.lat,p.lng,p.acc,p.t)}).catch(()=>{G.errN++})}
 async function gStart(){
   G.type=$('g-type').value;G.cap=($('g-cap')||{}).value||'';G.share=$('g-share')?$('g-share').checked:true;G.pts=[];G.dist=0;G.err='';G.errN=0;
@@ -569,8 +627,27 @@ async function gStart(){
 function gStop(){clearInterval(G.poll);clearInterval(G.tk);G.on=false;if(G.bg!=null&&BG){BG.removeWatcher({id:G.bg}).catch(()=>{});G.bg=null}try{G.wl&&G.wl.release()}catch(_){}if(tg.disableClosingConfirmation)tg.disableClosingConfirmation()}
 async function gSave(){
   const pts=G.pts.slice();gStop();
-  try{const r=await api('/api/track',{type:G.type,points:pts,caption:G.cap,shared:G.share!==false});toast(r.success?r.message:(r.error||'Could not save'));if(r.success)await refresh();else render()}
-  catch(_){toast('Network error');render()}
+  try{
+    const r=await api('/api/track',{type:G.type,points:pts,caption:G.cap,shared:G.share!==false});
+    if(r.success){await refresh();loadTerr();showResult(r.result||{})}
+    else{toast(r.error||'Could not save');render()}
+  }catch(_){toast('Network error');render()}
+}
+function showResult(r){
+  const st=r.stolen||0,z=r.zones||0;
+  const h=st?`You stole ${st} territor${st===1?'y':'ies'}`:(r.loop&&z?`Loop closed. ${z} zone${z===1?'':'s'} captured`:z?`${z} zone${z===1?'':'s'} visited`:'Nice move');
+  const sub=r.loop?'Everything inside your loop counts as yours.':'Tip: finish within 250 m of where you started to capture the area inside your route.';
+  openSheet(`<div class="rs"><div class="eyebrow">MOVE COMPLETE</div><h1>${h}</h1><p class="muted" style="margin:0">${sub}</p>
+  <div class="st3"><div><b>${r.area||0}</b><small>KM² TOUCHED</small></div><div><b>${r.taken||0}</b><small>ZONES NOW YOURS</small></div><div><b>${st}</b><small>STOLEN</small></div></div>
+  <div class="st3"><div><b>${r.km||0}</b><small>KM</small></div><div><b>${r.mins||0}</b><small>MIN</small></div><div><b>${r.kmh||0}</b><small>KM/H</small></div></div>
+  <button class="btn" data-close>CONTINUE</button><button class="btn ghost" data-map style="margin-top:8px">VIEW ON THE MAP</button></div>`);
+}
+async function loadTerr(){
+  try{const r=await api('/api/territory-events');S.terr=r.success?r.events:[]}catch(_){S.terr=[]}
+  if((S.tab==='home'||S.tab==='territory')&&$('sheet').style.display!=='block'){const y=window.scrollY;render();window.scrollTo(0,y)}
+}
+function evRows(list,n){
+  return list.slice(0,n).map(e=>`<div class="ev ${e.dir}"><div class="ei">${e.dir==='lost'?'⚔️':'🏴'}</div><div><b>${e.dir==='lost'?esc(e.name)+' took '+e.cells+' of your zone'+(e.cells===1?'':'s'):'You took '+e.cells+' zone'+(e.cells===1?'':'s')+' from '+esc(e.name)}</b><small>${e.area} km² · ${ago(e.at)}</small></div></div>`).join('');
 }
 function nearCard(){
   if(!S.places.some(p=>p.latitude!=null))return '';
@@ -682,10 +759,12 @@ function territory(){
   <div class="card season"><div style="display:flex;justify-content:space-between;align-items:center"><div class="eyebrow" style="margin:0">WEEKLY SEASON</div><span class="cd">⏱ ${seasonLeft()} left</span></div>
   <div class="stats3" style="margin:12px 0 0"><div><b id="t-sp">${w.points}</b><small>YOUR POINTS</small></div><div><b id="t-sr">–</b><small id="t-sr-s">SEASON RANK</small></div><div><b>${w.zones}</b><small>ZONES THIS WEEK</small></div></div>
   <p style="margin:12px 0 0">Every Monday a new season starts. Points come from the zones you visit this week: 10 per zone-day plus up to 5 for effort.</p></div>
-  <div class="tiles"><div class="tile"><span class="te">${held}</span><b>Zones held</b></div><div class="tile"><span class="te">${streakDays()}</span><b>Day streak</b><small>GPS moves</small></div><div class="tile"><span class="te" id="t-rank">–</span><b>Zone rank</b><small id="t-rank-s">&nbsp;</small></div></div>
+  <div class="tiles"><div class="tile"><span class="te">${held}</span><b>Zones held</b></div><div class="tile"><span class="te">${(held*0.076).toFixed(1)}</span><b>km² held</b></div><div class="tile"><span class="te">${streakDays()}</span><b>Day streak</b><small>GPS moves</small></div></div>
   <div id="map"></div>
   <button class="btn ghost" data-recenter style="margin-top:10px">📍 CENTER ON ME</button>
-  <div class="card" style="margin-top:14px"><h3>How zones work</h3><p style="margin:0"><span style="color:var(--gold)">■</span> Yours &nbsp; <span style="color:var(--blue)">■</span> Another mover. Tap a zone for details.<br><br>Each zone is about 275 m wide. Walk, run or ride with GPS to visit zones. Over 30 days, the mover with the most points holds a zone: <b>10 points for every day you visit</b> (consistency) plus <b>up to 5 for how hard you move</b> (intensity). Come back often and push your pace to take zones over.</p></div>
+  <div class="lg"><span><span style="color:#a3e635">■</span> Yours</span><span><span style="color:#ef4444">■</span> Another mover</span></div>
+  <div class="sec">TERRITORY BATTLES</div><div class="card">${(S.terr||[]).length?evRows(S.terr,8):'<p style="margin:0">No zones taken or lost in the last 14 days. Run a loop around a rival zone to steal it.</p>'}</div>
+  <div class="card"><h3>How to capture</h3><p style="margin:0"><b>1. Run a loop.</b> Finish within 250 m of where you started and every zone inside your route becomes a visit.<br><b>2. Steal.</b> Each zone is about 275 m wide. Over 30 days, whoever has the most points holds it: <b>10 for every day you visit</b> plus <b>up to 5 for effort</b>. Ties go to the latest mover.<br><b>3. Defend.</b> Come back often. Anyone who out-scores you takes your zone and you will see it in Battles.</p></div>
   ${districtsBlock()}
   <div class="sec">THIS WEEK'S TOP MOVERS</div><div class="card" id="slb"><p style="margin:0">Loading…</p></div>
   <div class="sec">MOST ZONES HELD</div><div class="card" id="lb"><p style="margin:0">Loading…</p></div>`;
@@ -706,7 +785,7 @@ function initTMap(){
       const r=await api(`/api/territory?s=${b.getSouth()}&w=${b.getWest()}&n=${b.getNorth()}&e=${b.getEast()}`);
       if(!r.success)return;
       LAYER.clearLayers();
-      r.cells.forEach(k=>L.rectangle([[k.y*0.0025,k.x*0.0025],[(k.y+1)*0.0025,(k.x+1)*0.0025]],{stroke:true,weight:1,color:k.m?'#f5c518':'#60a5fa',fillColor:k.m?'#f5c518':'#60a5fa',fillOpacity:Math.min(.75,.25+k.s/120)}).bindPopup(k.m?`<b>Held by you</b><br>${k.s} points`:`<b>Held by another mover</b><br>${k.s} points<br>Visit on more days and move faster to take it.`).addTo(LAYER));
+      r.cells.forEach(k=>L.rectangle([[k.y*0.0025,k.x*0.0025],[(k.y+1)*0.0025,(k.x+1)*0.0025]],{stroke:true,weight:1,color:k.m?'#a3e635':'#ef4444',fillColor:k.m?'#a3e635':'#ef4444',fillOpacity:Math.min(.75,.25+k.s/120)}).bindPopup(k.m?`<b>Held by you</b><br>${k.s} points`:`<b>Held by another mover</b><br>${k.s} points<br>Run a loop around it, or visit on more days, to steal it.`).addTo(LAYER));
     }catch(_){}
   };
   MAP.on('moveend',draw);
