@@ -125,7 +125,7 @@ async function upsertUser(tg) {
       },
       { onConflict: 'telegram_id' }
     )
-    .select('id, first_name, username, onboarded_at')
+    .select('id, first_name, username, onboarded_at, photo_url')
     .single();
   if (error) throw error;
   return data;
@@ -247,7 +247,15 @@ async function bootstrap(req, res) {
     chal = computeChallenges(rr.data, pr.data);
     const xp = computeXp(pr.data, rr.data, goals);
     const tc = await supabase.from('cell_owners').select('cx', { count: 'exact', head: true }).eq('user_id', u.id);
-    me = { territory: tc.count || 0, onboarded: !!u.onboarded_at, first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
+    const ws = weekStartET();
+    const wv = await supabase.from('cell_visits').select('cx,cy,day,intensity').eq('user_id', u.id).gte('day', ws);
+    const wrows = wv.data || [];
+    const week = {
+      zones: new Set(wrows.map((x) => x.cx + ',' + x.cy)).size,
+      days: new Set(wrows.map((x) => x.day)).size,
+      points: wrows.reduce((a, x) => a + 10 + x.intensity, 0)
+    };
+    me = { week, photo: u.photo_url || null, territory: tc.count || 0, onboarded: !!u.onboarded_at, first_name: u.first_name, username: u.username, xp, level: Math.floor(xp / 100) + 1 };
     joined = pr.data.map((x) => x.activity_id);
     records = rr.data;
   }
@@ -310,7 +318,7 @@ async function logActivity(req, res) {
   const tgUser = authTg(req);
   if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to log activities.' });
 
-  const { type, distanceKm, minutes, placeId, performedAt } = req.body || {};
+  const { type, distanceKm, minutes, placeId, performedAt, caption, shared } = req.body || {};
   if (!ACTIVITY_TYPES.includes(type)) return json(res, 400, { success: false, error: 'Choose an activity type.' });
 
   const dist = distanceKm === '' || distanceKm == null ? null : Number(distanceKm);
@@ -344,6 +352,8 @@ async function logActivity(req, res) {
     distance_km: dist,
     duration_seconds: mins === null ? null : Math.round(mins * 60),
     source: 'manual',
+    shared: shared !== false,
+    caption: cleanCaption(caption),
     performed_at: when.toISOString()
   });
   if (error) throw error;
@@ -351,6 +361,7 @@ async function logActivity(req, res) {
 }
 
 // ---- POST /api/track (GPS) ----
+const cleanCaption = (c) => (typeof c === 'string' && c.trim() ? c.trim().slice(0, 140) : null);
 const MAXV = { RUNNING: 9, WALKING: 4, HIKING: 4, CYCLING: 20, FOOTBALL: 9, SWIMMING: 3, GYM: 9, STRENGTH: 9, OTHER: 9 }; // max m/s
 function hav(a, b) {
   const R = 6371000, r = (x) => (x * Math.PI) / 180;
@@ -361,7 +372,7 @@ function hav(a, b) {
 async function track(req, res) {
   const tgUser = authTg(req);
   if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to track.' });
-  const { type, points } = req.body || {};
+  const { type, points, caption, shared } = req.body || {};
   if (!ACTIVITY_TYPES.includes(type)) return json(res, 400, { success: false, error: 'Choose an activity type.' });
   if (!Array.isArray(points) || points.length < 2 || points.length > 6000) {
     return json(res, 400, { success: false, error: 'Not enough GPS data.' });
@@ -400,6 +411,8 @@ async function track(req, res) {
     duration_seconds: Math.round(secs),
     gps_track: pts.filter((_, i) => i % step === 0),
     source: 'gps',
+    shared: shared !== false,
+    caption: cleanCaption(caption),
     performed_at: new Date(pts[0].t).toISOString()
   });
   if (error) throw error;
@@ -468,6 +481,92 @@ async function territory(req, res) {
   return json(res, 200, { success: true, cells: data.map((c) => ({ x: c.cx, y: c.cy, m: c.user_id === uid ? 1 : 0, s: c.score })) });
 }
 
+
+// ---- GET /api/feed (Strava-style posts: first name only, route shape without real coordinates) ----
+function routeShape(track) {
+  if (!Array.isArray(track) || track.length < 12) return null;
+  const cut = Math.max(2, Math.floor(track.length * 0.1)); // hide start/end so home addresses are not revealed
+  const t = track.slice(cut, track.length - cut);
+  if (t.length < 6) return null;
+  const lats = t.map((p) => p.lat), lngs = t.map((p) => p.lng);
+  const minLa = Math.min(...lats), maxLa = Math.max(...lats), minLn = Math.min(...lngs), maxLn = Math.max(...lngs);
+  const kx = Math.cos(((minLa + maxLa) / 2) * Math.PI / 180);
+  const w = (maxLn - minLn) * kx, h = maxLa - minLa;
+  const sc = Math.max(w, h);
+  if (!sc || sc * 111000 < 80) return null;
+  const step = Math.ceil(t.length / 70);
+  const ox = (100 - (w / sc) * 100) / 2, oy = (100 - (h / sc) * 100) / 2;
+  return t.filter((_, i) => i % step === 0).map((p) => `${(ox + ((p.lng - minLn) * kx / sc) * 100).toFixed(1)},${(oy + ((maxLa - p.lat) / sc) * 100).toFixed(1)}`).join(' ');
+}
+async function feed(req, res) {
+  const tgUser = authTg(req);
+  const uid = tgUser ? (await upsertUser(tgUser)).id : null;
+  const since = new Date(Date.now() - 30 * 86400e3).toISOString();
+  const { data, error } = await supabase
+    .from('activity_records')
+    .select('id,user_id,type,distance_km,duration_seconds,source,caption,performed_at,gps_track,place_id,users:user_id(first_name,photo_url)')
+    .eq('shared', true)
+    .gte('performed_at', since)
+    .order('performed_at', { ascending: false })
+    .limit(30);
+  if (error) throw error;
+  const ids = data.map((r) => r.id);
+  let likes = [];
+  if (ids.length) {
+    const lr = await supabase.from('post_likes').select('record_id,user_id').in('record_id', ids);
+    if (lr.error) throw lr.error;
+    likes = lr.data;
+  }
+  return json(res, 200, {
+    success: true,
+    posts: data.map((r) => ({
+      id: r.id,
+      name: (r.users && r.users.first_name) || 'Mover',
+      photo: (r.users && r.users.photo_url) || null,
+      mine: r.user_id === uid ? 1 : 0,
+      type: r.type,
+      km: r.distance_km != null ? Number(r.distance_km) : null,
+      secs: r.duration_seconds,
+      source: r.source,
+      caption: r.caption,
+      at: r.performed_at,
+      place_id: r.place_id,
+      route: routeShape(r.gps_track),
+      likes: likes.filter((l) => l.record_id === r.id).length,
+      liked: likes.some((l) => l.record_id === r.id && l.user_id === uid) ? 1 : 0
+    }))
+  });
+}
+
+// ---- POST /api/like (toggle) ----
+async function like(req, res) {
+  const tgUser = authTg(req);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Open Addis Active from Telegram to like posts.' });
+  const { recordId } = req.body || {};
+  if (!UUID_RE.test(recordId || '')) return json(res, 400, { success: false, error: 'Invalid post.' });
+  const u = await upsertUser(tgUser);
+  const post = await supabase.from('activity_records').select('id').eq('id', recordId).eq('shared', true).maybeSingle();
+  if (post.error) throw post.error;
+  if (!post.data) return json(res, 404, { success: false, error: 'Post not found.' });
+  const ex = await supabase.from('post_likes').select('record_id').eq('record_id', recordId).eq('user_id', u.id).maybeSingle();
+  if (ex.error) throw ex.error;
+  if (ex.data) await supabase.from('post_likes').delete().eq('record_id', recordId).eq('user_id', u.id);
+  else await supabase.from('post_likes').insert({ record_id: recordId, user_id: u.id });
+  return json(res, 200, { success: true, liked: ex.data ? 0 : 1 });
+}
+
+// ---- POST /api/unshare (remove my own post from the feed) ----
+async function unshare(req, res) {
+  const tgUser = authTg(req);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Sign in first.' });
+  const { recordId } = req.body || {};
+  if (!UUID_RE.test(recordId || '')) return json(res, 400, { success: false, error: 'Invalid post.' });
+  const u = await upsertUser(tgUser);
+  const { error } = await supabase.from('activity_records').update({ shared: false }).eq('id', recordId).eq('user_id', u.id);
+  if (error) throw error;
+  return json(res, 200, { success: true });
+}
+
 // ---- GET /api/leaderboard (anonymous: shows zone counts, never names) ----
 async function leaderboard(req, res) {
   const tgUser = authTg(req);
@@ -483,12 +582,49 @@ async function leaderboard(req, res) {
   for (const r of rows) counts[r.user_id] = (counts[r.user_id] || 0) + 1;
   const arr = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   const idx = arr.findIndex(([id]) => id === uid);
+  // Weekly season: points from this Addis week (Mon-Sun), resets every Monday
+  const ws = weekStartET();
+  let wr = [];
+  for (let i = 0; i < 20; i++) {
+    const { data, error } = await supabase.from('cell_visits').select('user_id,intensity').gte('day', ws).order('day').range(i * 1000, i * 1000 + 999);
+    if (error) throw error;
+    wr = wr.concat(data);
+    if (data.length < 1000) break;
+  }
+  const wp = {};
+  for (const r of wr) wp[r.user_id] = (wp[r.user_id] || 0) + 10 + r.intensity;
+  const warr = Object.entries(wp).sort((a, b) => b[1] - a[1]);
+  const widx = warr.findIndex(([id]) => id === uid);
+  const end = new Date(ws + 'T00:00:00Z'); end.setUTCDate(end.getUTCDate() + 7);
+  const season = {
+    endsAt: new Date(end.getTime() - 3 * 3600e3).toISOString(), // next Monday 00:00 Addis time
+    movers: warr.length,
+    rank: widx >= 0 ? widx + 1 : null,
+    points: widx >= 0 ? warr[widx][1] : 0,
+    top: warr.slice(0, 10).map(([id, n]) => ({ points: n, me: id === uid ? 1 : 0 }))
+  };
   return json(res, 200, {
     success: true,
+    season,
     movers: arr.length,
     rank: idx >= 0 ? idx + 1 : null,
     top: arr.slice(0, 10).map(([id, n]) => ({ zones: n, me: id === uid ? 1 : 0 }))
   });
+}
+
+// ---- GET /api/tg-callback (redirect-style Telegram login, used by the native app) ----
+async function tgCallback(req, res) {
+  const q = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams);
+  const u = verifyLoginWidget(q);
+  res.setHeader('Cache-Control', 'no-store');
+  if (!u) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(401).send('<meta name="viewport" content="width=device-width"><body style="font-family:sans-serif;background:#0a1020;color:#fff;padding:24px">Sign-in could not be verified. <a style="color:#f5c518" href="/">Go back</a></body>');
+  }
+  await upsertUser(u);
+  const tok = JSON.stringify(signSession(u)).replace(/</g, '\\u003c');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  return res.status(200).send(`<!doctype html><meta name="viewport" content="width=device-width"><body style="background:#0a1020"><script>try{localStorage.setItem('aa_token',${tok})}catch(e){}location.replace('/')</script>`);
 }
 
 // ---- POST /api/web-login ----
@@ -497,6 +633,18 @@ async function webLogin(req, res) {
   if (!u) return json(res, 401, { success: false, error: 'Sign-in could not be verified.' });
   await upsertUser(u);
   return json(res, 200, { success: true, token: signSession(u) });
+}
+
+// ---- POST /api/goal-delete (soft delete: status = ABANDONED) ----
+async function deleteGoal(req, res) {
+  const tgUser = authTg(req);
+  if (!tgUser) return json(res, 401, { success: false, error: 'Please sign in.' });
+  const { id } = req.body || {};
+  if (typeof id !== 'string' || !UUID_RE.test(id)) return json(res, 400, { success: false, error: 'Invalid goal.' });
+  const user = await upsertUser(tgUser);
+  const { error } = await supabase.from('goals').update({ status: 'ABANDONED' }).eq('id', id).eq('user_id', user.id);
+  if (error) throw error;
+  return json(res, 200, { success: true });
 }
 
 // ---- Telegram bot (onboarding lives in onboarding.js) ----
@@ -509,12 +657,17 @@ module.exports = async (req, res) => {
     if (p === '/api/bootstrap' && req.method === 'GET') return await bootstrap(req, res);
     if (p === '/api/config' && req.method === 'GET') return json(res, 200, { success: true, botUsername: process.env.BOT_USERNAME || null });
     if (p === '/api/web-login' && req.method === 'POST') return await webLogin(req, res);
+    if (p === '/api/tg-callback' && req.method === 'GET') return await tgCallback(req, res);
     if (p === '/api/join' && req.method === 'POST') return await join(req, res);
     if (p === '/api/log' && req.method === 'POST') return await logActivity(req, res);
     if (p === '/api/track' && req.method === 'POST') return await track(req, res);
     if (p === '/api/goal' && req.method === 'POST') return await createGoal(req, res);
+    if (p === '/api/goal-delete' && req.method === 'POST') return await deleteGoal(req, res);
     if (p === '/api/territory' && req.method === 'GET') return await territory(req, res);
     if (p === '/api/leaderboard' && req.method === 'GET') return await leaderboard(req, res);
+    if (p === '/api/feed' && req.method === 'GET') return await feed(req, res);
+    if (p === '/api/like' && req.method === 'POST') return await like(req, res);
+    if (p === '/api/unshare' && req.method === 'POST') return await unshare(req, res);
 
     if (req.method === 'POST') {
       if (WEBHOOK_SECRET && req.headers['x-telegram-bot-api-secret-token'] !== WEBHOOK_SECRET) {
