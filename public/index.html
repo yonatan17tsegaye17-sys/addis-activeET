@@ -143,6 +143,39 @@ html{background:#070b16}
 .season{border-color:rgba(245,197,24,.35)}
 .cd{font-size:12px;font-weight:800;color:var(--gold);letter-spacing:.4px}
 .chk{display:flex;align-items:center;gap:10px;margin:2px 0 12px;font-size:13px;color:#cbd5e1}.chk input{width:20px;height:20px;margin:0;accent-color:#22c55e}
+
+/* ---- v3 detailed cards (explore, communities, events) ---- */
+.dc{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:22px;margin-bottom:16px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.32)}
+.dc.item:active{transform:scale(.99)}
+.dc-img{position:relative;height:190px;background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:flex-end;padding:14px 16px;overflow:hidden}
+.dc-img::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,16,32,.15) 20%,rgba(10,16,32,.88) 100%)}
+.dc-img .wm{position:absolute;right:-6px;top:6px;font-size:96px;opacity:.16;line-height:1}
+.dc-img>*{position:relative}
+.dc-img h3{margin:0 0 4px;font-size:21px;font-weight:800;letter-spacing:-.2px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.dc-img .sub{font-size:12px;color:#cbd5e1}
+.tag{position:absolute!important;top:14px;left:14px;padding:6px 12px;border-radius:12px;font-size:11px;font-weight:800;letter-spacing:.6px;color:#0a1020;text-transform:uppercase}
+.tag2{position:absolute!important;top:14px;right:14px;padding:6px 11px;border-radius:12px;font-size:10px;font-weight:800;letter-spacing:.5px;background:rgba(10,16,32,.7);border:1px solid rgba(255,255,255,.18);color:#fbbf24;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.dc-b{padding:14px 16px 4px}
+.dc-b p{margin:0 0 12px;color:#cbd5e1;font-size:13.5px;line-height:1.55}
+.dc-m{display:flex;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.dc-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 16px}
+.dc-f .nx{font-size:13px;font-weight:700;color:var(--green)}
+.dc-f .nx.mu{color:var(--muted);font-weight:600}
+.jb{background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.55);color:var(--green);font-weight:800;font-size:14px;padding:11px 22px;border-radius:14px;cursor:pointer}
+.jb[disabled]{opacity:.7}
+.fc{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 16px;align-items:center}
+.fc .pillx{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:11.5px;font-weight:700;color:#cbd5e1}
+.fc .more{margin-left:auto;color:var(--gold);font-weight:800;font-size:12px}
+.c-RUNNING{background:#a3e635}.c-WALKING{background:#38bdf8}.c-CYCLING{background:#60a5fa}.c-HIKING{background:#fb923c}.c-SWIMMING{background:#22d3ee}.c-FOOTBALL{background:#4ade80}.c-STRENGTH{background:#c084fc}.c-GYM{background:#a78bfa}.c-OTHER{background:#e2e8f0}
+.g-RUNNING{background-image:linear-gradient(135deg,#365314,#14532d 55%,#0f2a4d)}.g-WALKING{background-image:linear-gradient(135deg,#075985,#0f3d3e 60%,#0f2a4d)}.g-CYCLING{background-image:linear-gradient(135deg,#1e3a8a,#312e81 60%,#0f2a4d)}.g-HIKING{background-image:linear-gradient(135deg,#7c2d12,#365314 60%,#0f2a4d)}.g-SWIMMING{background-image:linear-gradient(135deg,#155e75,#1e3a8a 60%,#0f2a4d)}.g-FOOTBALL{background-image:linear-gradient(135deg,#166534,#14532d 60%,#0f2a4d)}.g-STRENGTH,.g-GYM{background-image:linear-gradient(135deg,#581c87,#312e81 60%,#0f2a4d)}.g-OTHER{background-image:linear-gradient(135deg,#334155,#1e3a8a)}
+.cityhero .dc-img{height:210px;background-image:radial-gradient(circle at 78% 18%,rgba(245,197,24,.3),transparent 45%),linear-gradient(135deg,#14532d,#1e3a8a 60%,#0a1020)}
+.cityhero .eb{font-size:11px;letter-spacing:1.4px;color:var(--gold);font-weight:800;margin-bottom:4px}
+.chips.act .chip{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:13px;border-radius:16px}
+.chips.act .chip.on{background:var(--green);border-color:var(--green);color:#052e16}
+.dz{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.dz div{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer}
+.dz div.ok{border-color:rgba(34,197,94,.6);background:rgba(34,197,94,.07)}
+.dz .de{font-size:26px}.dz b{display:block;font-size:13px;margin:4px 0 2px}.dz small{display:block;color:var(--muted);font-size:11px;line-height:1.35}.dz em{display:block;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.5px;margin-top:6px;color:var(--muted)}.dz .ok em{color:var(--green)}
 </style>
 </head>
 <body>
@@ -209,12 +242,33 @@ function when(a){
   if(!a.date)return 'Date to be announced';
   return esc(a.date)+(a.time?' · '+esc(String(a.time).slice(0,5)):'');
 }
+const BGC=(t)=>`g-${ACT[t]?t:'OTHER'}`;
+function imgStyle(m){return m&&m.thumbnail?`background-image:url('${esc(m.thumbnail)}')`:''}
+function actTag(t){const a=ACT[t]||ACT.OTHER;return `<span class="tag c-${ACT[t]?t:'OTHER'}">${a[0]} ${esc(a[1])}</span>`}
 function actCard(a){
   const pl=a.place_id?placeById(a.place_id):null, cm=a.community_id?commById(a.community_id):null, done=S.joined.has(a.id);
-  return `<div class="card"><div>${actBadge(a.status)}<span class="badge">${esc(al(a.category))}</span></div>
-  <h3 style="margin-top:8px">${esc(a.name)}</h3>
-  <p>📅 ${when(a)}${pl?`<br>📍 ${esc(pl.name)}`:''}${cm?`<br>👥 ${esc(cm.name)}`:''}${a.description?`<br>${esc(a.description)}`:''}</p>
-  <button class="btn" data-join="${a.id}" ${done?'disabled':''}>${done?'JOINED ✓':'JOIN'}</button></div>`;
+  return `<div class="dc"><div class="dc-img ${BGC(a.category)}"><span class="wm">${(ACT[a.category]||ACT.OTHER)[0]}</span>${actTag(a.category)}<span class="tag2">${esc(a.status)}</span><h3>${esc(a.name)}</h3>${cm?`<div class="sub">${esc(cm.name)}</div>`:''}</div>
+  ${a.description?`<div class="dc-b"><p>${esc(a.description)}</p></div>`:''}
+  <div class="dc-m"><span>📍 ${pl?esc(pl.name):'Location to be verified'}</span><span>📅 ${when(a)}</span></div>
+  <div class="dc-f"><span class="nx ${a.date?'':'mu'}">${a.date?'Next: '+when(a):'Date to be announced'}</span><button class="jb" data-join="${a.id}" ${done?'disabled':''}>${done?'Joined ✓':'Join ›'}</button></div></div>`;
+}
+function placeX(p){
+  const d=placeDist(p),acts=(p.activity_types||[]),first=acts[0]||'OTHER';
+  const n=S.activities.filter(a=>a.place_id===p.id&&a.status!=='CANCELLED').length;
+  return `<div class="dc item" data-place="${p.id}"><div class="dc-img ${BGC(first)}" style="${imgStyle(p.media)}"><span class="wm">${(ACT[first]||ACT.OTHER)[0]}</span>${actTag(first)}${p.featured?'<span class="tag2">⭐ FEATURED</span>':''}<h3>${esc(p.name)}</h3><div class="sub">📍 ${p.area?esc(p.area):'Addis Ababa'}${d!=null?' · <b style="color:var(--green)">'+distTxt(d)+'</b>':''}</div></div>
+  <div class="dc-b"><p>${p.description?esc(p.description):'<span class="muted">Details, distance and access: information to be verified.</span>'}</p></div>
+  <div class="fc"><span class="pillx">${esc(PT[p.place_type]||'Place')}</span>${acts.slice(0,3).map(t=>`<span class="pillx">${(ACT[t]||ACT.OTHER)[0]} ${esc(al(t))}</span>`).join('')}${n?`<span class="pillx">${n} activit${n===1?'y':'ies'}</span>`:''}${dataBadge(p.data_status)}<span class="more">Details ›</span></div></div>`;
+}
+function commX(c){
+  const pl=c.primary_place_id?placeById(c.primary_place_id):null,t=c.activity_type||'OTHER';
+  const today=new Date().toISOString().slice(0,10);
+  const nx=S.activities.filter(a=>a.community_id===c.id&&a.status!=='CANCELLED'&&a.status!=='COMPLETED'&&a.date&&a.date>=today).sort((x,y)=>x.date<y.date?-1:1)[0];
+  const sched=typeof c.schedule==='string'&&c.schedule?c.schedule:null;
+  const done=nx&&S.joined.has(nx.id);
+  return `<div class="dc item" data-comm="${c.id}"><div class="dc-img ${BGC(t)}"><span class="wm">${(ACT[t]||ACT.OTHER)[0]}</span>${c.activity_type?actTag(t):''}<span class="tag2">${c.data_status==='VERIFIED'?'✔ VERIFIED':'TO BE VERIFIED'}</span><h3>${esc(c.name)}</h3>${c.tagline?`<div class="sub">${esc(c.tagline)}</div>`:''}</div>
+  <div class="dc-b"><p>${c.description?esc(c.description):'<span class="muted">Description, members and organizers: information to be verified.</span>'}</p></div>
+  <div class="dc-m"><span>📍 ${pl?esc(pl.name):'Meeting place to be verified'}</span><span>📅 ${sched?esc(sched):'Schedule to be verified'}</span></div>
+  <div class="dc-f"><span class="nx ${nx?'':'mu'}">${nx?'Next: '+when(nx):'Next session to be announced'}</span>${nx?`<button class="jb" data-join="${nx.id}" ${done?'disabled':''}>${done?'Joined ✓':'Join ›'}</button>`:`<button class="jb" style="background:transparent;border-color:var(--line);color:var(--text)" data-comm="${c.id}">View ›</button>`}</div></div>`;
 }
 
 /* ---------- screens ---------- */
@@ -314,12 +368,12 @@ document.addEventListener('click',async e=>{
 });
 
 function explore(){
-  const cnt=t=>S.places.filter(p=>(p.activity_types||[]).includes(t)).length+S.activities.filter(a=>a.category===t).length+S.communities.filter(c=>c.activity_type===t).length;
-  const tiles=Object.keys(ACT).filter(t=>t!=='OTHER').map(t=>`<div class="tile ${S.act===t?'on':''}" data-act="${t}"><span class="te">${ACT[t][0]}</span><b>${ACT[t][1]}</b><small>${cnt(t)} listed</small></div>`).join('');
   const chips=['ALL',...Object.keys(PT)].map(t=>`<div class="chip ${S.type===t?'on':''}" data-type="${t}">${t==='ALL'?'All places':PT[t]}</div>`).join('');
-  return `<div class="exh"><div class="eyebrow">DISCOVER ADDIS · MOVE ADDIS</div><h2>Explore Addis</h2><p class="muted" style="margin:-6px 0 14px">What do you want to do today?</p></div>
+  const acts=[['ALL','All',''],...Object.keys(ACT).filter(t=>t!=='OTHER').map(t=>[t,ACT[t][1],ACT[t][0]])].map(([k,l,e])=>`<div class="chip ${S.act===k?'on':''}" data-act="${k==='ALL'?(S.act==='ALL'?'ALL':S.act):k}" ${k==='ALL'?'data-actall':''}>${e?`<span>${e}</span>`:''}${l}</div>`).join('');
+  return `<div class="exh"><div class="eyebrow">DISCOVER ADDIS · MOVE ADDIS</div><h2 style="margin-bottom:6px">Explore Addis</h2><p class="muted" style="margin:0 0 14px;font-size:13px">${S.places.length} places · ${S.activities.length} activities · ${S.communities.length} communities listed</p></div>
+  <div class="dc cityhero"><div class="dc-img"><div class="eb">ADDIS ABABA</div><h3 style="font-size:25px">The New Flower City</h3><div class="sub" style="font-size:13px">Train at about 2,355 m above sea level</div></div></div>
   <input id="q" placeholder="Search Addis: places, activities, clubs" value="${esc(S.q)}" autocomplete="off">
-  <div class="tiles">${tiles}</div><div class="chips">${chips}</div><div id="results"></div>`;
+  <div class="chips act">${acts}</div><div class="chips">${chips}</div><div id="results"></div>`;
 }
 function results(){
   const q=S.q.trim().toLowerCase(),A=S.act,hit=(...f)=>!q||f.some(x=>String(x||'').toLowerCase().includes(q));
@@ -328,14 +382,14 @@ function results(){
   const cm=(q||A!=='ALL')?S.communities.filter(c=>(A==='ALL'||c.activity_type===A)&&hit(c.name,al(c.activity_type),c.tagline)):[];
   let o='';
   if(ac.length)o+=`<div class="sec">ACTIVITIES</div>`+ac.map(actCard).join('');
-  if(cm.length)o+=`<div class="sec">COMMUNITIES</div><div class="card">`+cm.map(c=>`<div class="row item" data-comm="${c.id}"><b>${esc(c.name)}</b>${dataBadge(c.data_status)}</div>`).join('')+`</div>`;
-  if(pl.length)o+=`<div class="sec">PLACES</div><div class="card">`+pl.map(p=>`<div class="row item" data-place="${p.id}"><span><b>${esc(p.name)}</b><br><span class="muted">${esc(PT[p.place_type]||'')}${p.area?' · '+esc(p.area):''}</span></span>${dataBadge(p.data_status)}</div>`).join('')+`</div>`;
+  if(cm.length)o+=`<div class="sec">COMMUNITIES</div>`+cm.map(commX).join('');
+  if(pl.length)o+=`<div class="sec">PLACES</div>`+pl.map(placeX).join('');
   $('results').innerHTML=o||`<div class="card"><p style="margin:0">Nothing listed yet${A!=='ALL'?' for '+esc(al(A)):''}. Try another activity or word.</p></div>`;
 }
 
 function community(){
   if(!S.communities.length)return `<div class="card"><p style="margin:0">Find people who move like you.</p></div>`;
-  return S.communities.map(c=>`<div class="card item" data-comm="${c.id}">${dataBadge(c.data_status)}<h3 style="margin-top:8px">${esc(c.name)}</h3><p style="margin:0">${esc(c.tagline||'Information to be verified')}</p></div>`).join('');
+  return `<div class="exh"><div class="eyebrow">CONNECT ADDIS</div><h2 style="margin-bottom:14px">Communities</h2></div>`+S.communities.map(commX).join('');
 }
 
 function track(){
@@ -411,13 +465,14 @@ function render(){
 }
 
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('[data-tab],[data-join],[data-place],[data-comm],[data-close],[data-type],[data-act],[data-retry],#l-save');
+  const t=e.target.closest('[data-tab],[data-join],[data-place],[data-comm],[data-close],[data-type],[data-act],[data-actall],[data-retry],#l-save');
   if(!t)return;
   if(tg.HapticFeedback)tg.HapticFeedback.selectionChanged();
   if(t.dataset.tab){S.tab=t.dataset.tab;closeSheet();render();window.scrollTo(0,0)}
   else if(t.dataset.close!==undefined)closeSheet();
   else if(t.dataset.retry!==undefined)refresh();
   else if(t.dataset.type){S.type=t.dataset.type;render()}
+  else if(t.dataset.actall!==undefined){S.act='ALL';render()}
   else if(t.dataset.act){S.act=S.act===t.dataset.act?'ALL':t.dataset.act;render()}
   else if(t.dataset.place)placeSheet(t.dataset.place);
   else if(t.dataset.comm)commSheet(t.dataset.comm);
@@ -613,6 +668,14 @@ function streakDays(){
   let n=0;while(set.has(k(t))){n++;t-=86400e3}
   return n;
 }
+const DISTRICTS=[['🛫','Bole & Airport Zone','Urban tarmac corridors.',0,['bole']],['🌲','Entoto Mountain Range','High-altitude eucalyptus forests.',100,['entoto']],['🏛️','Unity & Palace Grounds','Historic gardens and walking paths.',250,['unity','piassa','arat kilo']],['🏟️','Central Sports & Aquatic Hub','Stadiums, pools and turf grounds.',400,['sport','meskel']]];
+function districtsBlock(){
+  const xp=S.me?.xp||0,done=DISTRICTS.filter(d=>xp>=d[3]).length;
+  return `<div class="sec">DISTRICTS OF ADDIS · ${done} OF ${DISTRICTS.length} EXPLORED</div><div class="card"><p>Districts unlock as your XP grows. Tap one to see its places.</p><div class="dz">`+DISTRICTS.map((d,i)=>{
+    const ok=xp>=d[3],n=S.places.filter(p=>d[4].some(k=>((p.name||'')+' '+(p.area||'')).toLowerCase().includes(k))).length;
+    return `<div class="${ok?'ok':''}" data-district="${i}"><span class="de">${d[0]}</span><b>${d[1]}</b><small>${d[2]}<br>${n} place${n===1?'':'s'} listed</small><em>${ok?'EXPLORED ⚡':'NEEDS '+d[3]+' XP'}</em></div>`}).join('')+`</div></div>`;
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-district]');if(!t)return;const d=DISTRICTS[+t.dataset.district];S.q=d[4][0];S.act='ALL';S.type='ALL';S.tab='explore';closeSheet();render();window.scrollTo(0,0)});
 function territory(){
   const held=S.me?.territory||0,w=S.me?.week||{zones:0,days:0,points:0};
   return `<div class="eyebrow">TERRITORY</div><h3 style="margin:0 0 12px;font-size:20px">Claim Addis, week by week</h3>
@@ -623,6 +686,7 @@ function territory(){
   <div id="map"></div>
   <button class="btn ghost" data-recenter style="margin-top:10px">📍 CENTER ON ME</button>
   <div class="card" style="margin-top:14px"><h3>How zones work</h3><p style="margin:0"><span style="color:var(--gold)">■</span> Yours &nbsp; <span style="color:var(--blue)">■</span> Another mover. Tap a zone for details.<br><br>Each zone is about 275 m wide. Walk, run or ride with GPS to visit zones. Over 30 days, the mover with the most points holds a zone: <b>10 points for every day you visit</b> (consistency) plus <b>up to 5 for how hard you move</b> (intensity). Come back often and push your pace to take zones over.</p></div>
+  ${districtsBlock()}
   <div class="sec">THIS WEEK'S TOP MOVERS</div><div class="card" id="slb"><p style="margin:0">Loading…</p></div>
   <div class="sec">MOST ZONES HELD</div><div class="card" id="lb"><p style="margin:0">Loading…</p></div>`;
 }
