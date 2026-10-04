@@ -95,6 +95,54 @@ html{background:#070b16}
   #sheet{inset:0 auto 0 50%;width:520px;transform:translateX(-50%)}
   #toast{left:50%;right:auto;width:480px;transform:translateX(-50%)}
 }
+
+/* ---- v2 layout: home feed, nearby, territory season ---- */
+.top h1{font-size:16px}
+#view{padding:14px 14px 8px}
+.greet{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 14px}
+.greet h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.2px}
+.greet small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.lv{flex:none;width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--gold);border:2px solid var(--gold);background:rgba(245,197,24,.08);line-height:1.1}
+.lv b{font-size:18px;color:#fff}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 6px}
+.qa div{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:16px;padding:12px 4px;text-align:center;font-size:11px;font-weight:700;cursor:pointer}
+.qa span{display:block;font-size:22px;margin-bottom:4px}
+.tu{background:linear-gradient(135deg,#7c5a07 0%,#1a2a4a 62%,#0a1020 100%);border:1px solid rgba(245,197,24,.35);border-radius:22px;padding:18px;margin-bottom:6px;box-shadow:0 10px 28px rgba(0,0,0,.35);position:relative;overflow:hidden}
+.tu::after{content:'';position:absolute;right:-30px;top:-30px;width:150px;height:150px;background:
+ linear-gradient(rgba(245,197,24,.18) 1px,transparent 1px) 0 0/25px 25px,linear-gradient(90deg,rgba(245,197,24,.18) 1px,transparent 1px) 0 0/25px 25px;transform:rotate(18deg);border-radius:24px;opacity:.8;pointer-events:none}
+.tu .big{font-size:44px;font-weight:900;line-height:1;margin:6px 0 2px;position:relative}
+.tu .sub{color:#e2e8f0;font-size:13px;position:relative;margin:0 0 14px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative;margin-bottom:14px}
+.stats3 div{background:rgba(10,16,32,.55);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stats3 b{display:block;font-size:19px;font-weight:800}
+.stats3 small{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+.sh{display:flex;justify-content:space-between;align-items:baseline;margin:24px 2px 10px}
+.sh .sec{margin:0}.sh a{font-size:12px;color:var(--gold);font-weight:700;cursor:pointer}
+.hs{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -14px;padding:2px 14px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.hs::-webkit-scrollbar{display:none}
+.mini{flex:none;width:226px;scroll-snap-align:start;background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.mini h4{margin:8px 0 4px;font-size:15px;font-weight:700;line-height:1.25}
+.mini p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}
+.mini .btn{padding:10px;font-size:12px}
+.mini .ph{height:68px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:30px;background:radial-gradient(circle at 80% 20%,rgba(245,197,24,.25),transparent 50%),linear-gradient(135deg,#14532d,#1e3a8a);margin-bottom:2px}
+.dist{color:var(--green);font-weight:800}
+.post{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:20px;margin-bottom:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.ph-h{display:flex;align-items:center;gap:10px;padding:14px 16px 8px}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#1e3a8a);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none;object-fit:cover;border:2px solid rgba(255,255,255,.15)}
+.ph-h b{display:block;font-size:14px}.ph-h small{color:var(--muted);font-size:11px}
+.post .cap{padding:0 16px 8px;font-size:14px;line-height:1.45}
+.post h3{margin:0;padding:2px 16px 8px;font-size:17px}
+.pstats{display:flex;gap:0;padding:4px 16px 12px}
+.pstats div{flex:1}.pstats b{display:block;font-size:20px;font-weight:800}.pstats small{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px}
+.route{width:100%;height:150px;background:radial-gradient(circle at 50% 40%,#1c3158,#0d1730);display:block;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.route polyline{fill:none;stroke:var(--gold);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px rgba(245,197,24,.6))}
+.noroute{height:84px;display:flex;align-items:center;justify-content:center;font-size:38px;background:linear-gradient(135deg,rgba(20,83,45,.5),rgba(30,58,138,.5));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pact{display:flex;gap:6px;padding:8px 10px}
+.pact button{background:transparent;border:0;color:var(--muted);font-size:13px;font-weight:700;padding:8px 12px;border-radius:12px;cursor:pointer}
+.pact button.on{color:#f87171}.pact .sp{flex:1}
+.season{border-color:rgba(245,197,24,.35)}
+.cd{font-size:12px;font-weight:800;color:var(--gold);letter-spacing:.4px}
+.chk{display:flex;align-items:center;gap:10px;margin:2px 0 12px;font-size:13px;color:#cbd5e1}.chk input{width:20px;height:20px;margin:0;accent-color:#22c55e}
 </style>
 </head>
 <body>
@@ -133,6 +181,7 @@ async function refresh(){
   }catch(e){S.err=e.message}
   render();
   hideSplash();
+  if(S.signedIn!==false)loadFeed();
 }
 
 /* ---------- helpers ---------- */
@@ -169,27 +218,100 @@ function actCard(a){
 }
 
 /* ---------- screens ---------- */
+/* ---------- home: territory update + nearby + feed ---------- */
+function ago(iso){const m=Math.floor((Date.now()-new Date(iso).getTime())/60000);if(m<1)return 'just now';if(m<60)return m+' min ago';const h=Math.floor(m/60);if(h<24)return h+' h ago';const d=Math.floor(h/24);return d<7?d+' d ago':new Date(iso).toLocaleDateString()}
+function fmtT(sec){if(!sec)return '–';const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}:${String(s).padStart(2,'0')}`}
+function seasonLeft(){
+  const d=new Date(Date.now()+3*3600e3);d.setUTCHours(0,0,0,0);
+  const dow=(d.getUTCDay()+6)%7;const end=d.getTime()+(7-dow)*86400e3-3*3600e3;
+  const ms=Math.max(0,end-Date.now()),dd=Math.floor(ms/86400e3),hh=Math.floor(ms%86400e3/3600e3);
+  return dd?`${dd}d ${hh}h`:`${hh}h ${Math.floor(ms%3600e3/60000)}m`;
+}
+function distTxt(m){return m<950?Math.round(m/10)*10+' m':(m/1000).toFixed(1)+' km'}
+function placeDist(pl){return S.loc&&pl&&pl.latitude!=null&&pl.longitude!=null?hav(S.loc,{lat:pl.latitude,lng:pl.longitude}):null}
+function tuCard(){
+  const held=S.me?.territory||0,w=S.me?.week||{zones:0,days:0,points:0},st=streakDays();
+  const msg=!S.me?'Open from Telegram to claim zones.':held?(w.zones?`You visited ${w.zones} zone${w.zones===1?'':'s'} this week. Keep going to hold them.`:'No visits this week yet. Zones fade after 30 days without visits.'):'Track a GPS move to claim your first zone.';
+  return `<div class="tu"><div class="eyebrow">TERRITORY UPDATE</div><div class="big">${held}</div><p class="sub">zone${held===1?'':'s'} held · ${msg}</p>
+  <div class="stats3"><div><b>${w.zones}</b><small>ZONES THIS WEEK</small></div><div><b>${w.points}</b><small>WEEK POINTS</small></div><div><b>${st}</b><small>DAY STREAK</small></div></div>
+  <div style="display:flex;gap:10px;align-items:center;position:relative"><button class="btn" data-map style="flex:1">OPEN MAP</button><span class="cd">⏱ ${seasonLeft()}<br><span style="color:var(--muted);font-weight:600">season left</span></span></div></div>`;
+}
+function eventCard(a){
+  const pl=a.place_id?placeById(a.place_id):null,cm=a.community_id?commById(a.community_id):null,done=S.joined.has(a.id),d=placeDist(pl);
+  return `<div class="mini"><div class="ph">${(ACT[a.category]||ACT.OTHER)[0]}</div><div style="margin-top:8px">${actBadge(a.status)}</div><h4>${esc(a.name)}</h4>
+  <p>📅 ${when(a)}<br>📍 ${pl?esc(pl.name):'Location to be verified'}${d!=null?` · <span class="dist">${distTxt(d)}</span>`:''}${cm?`<br>👥 ${esc(cm.name)}`:''}</p>
+  <button class="btn" data-join="${a.id}" ${done?'disabled':''}>${done?'JOINED ✓':'JOIN'}</button></div>`;
+}
+function locCard(p){
+  const d=placeDist(p),em=((p.activity_types||[]).map(t=>ACT[t]&&ACT[t][0]).filter(Boolean)[0])||'📍';
+  return `<div class="mini item" data-place="${p.id}"><div class="ph">${em}</div><h4>${esc(p.name)}</h4>
+  <p>${esc(PT[p.place_type]||'Place')}${p.area?' · '+esc(p.area):''}${d!=null?`<br><span class="dist">${distTxt(d)} away</span>`:''}</p>${dataBadge(p.data_status)}</div>`;
+}
+function postCard(p){
+  const a=ACT[p.type]||ACT.OTHER,init=(p.name||'?').charAt(0).toUpperCase();
+  const fast=['CYCLING'].includes(p.type);
+  let pace='–';
+  if(p.km&&p.secs){pace=fast?(p.km/(p.secs/3600)).toFixed(1)+' km/h':(()=>{const s=p.secs/p.km;return Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0')+' /km'})()}
+  const pl=p.place_id&&placeById(p.place_id);
+  return `<div class="post"><div class="ph-h">${p.photo?`<img class="av" src="${esc(p.photo)}" alt="">`:`<div class="av">${esc(init)}</div>`}<div><b>${p.mine?'You':esc(p.name)}</b><small>${ago(p.at)}${pl?' · '+esc(pl.name):''} · ${p.source==='gps'?'GPS':'Self-reported'}</small></div></div>
+  ${p.caption?`<div class="cap">${esc(p.caption)}</div>`:''}<h3>${a[0]} ${esc(a[1])}</h3>
+  <div class="pstats"><div><b>${p.km!=null?p.km.toFixed(2):'–'}</b><small>KM</small></div><div><b>${fmtT(p.secs)}</b><small>TIME</small></div><div><b>${pace}</b><small>${fast?'SPEED':'PACE'}</small></div></div>
+  ${p.route?`<svg class="route" viewBox="-6 -6 112 112" preserveAspectRatio="xMidYMid meet"><polyline points="${p.route}"/></svg>`:`<div class="noroute">${a[0]}</div>`}
+  <div class="pact"><button data-like="${p.id}" class="${p.liked?'on':''}">${p.liked?'❤️':'🤍'} ${p.likes||''}</button>${p.mine?`<span class="sp"></span><button data-unshare="${p.id}" style="font-size:11px">Remove from feed</button>`:''}</div></div>`;
+}
+function feedBlock(){
+  let o=`<div class="sh"><div class="sec">COMMUNITY FEED</div></div>`;
+  if(S.feed===undefined)return o+`<div class="card"><p style="margin:0">Loading moves…</p></div>`;
+  if(S.feed===null)return o+`<div class="card"><p style="margin:0">Couldn't load the feed. Pull down to try again later.</p></div>`;
+  if(!S.feed.length)return o+`<div class="card"><h3>No moves shared yet</h3><p>Moves from the community will show up here. Be the first.</p><button class="btn" data-tab="track">TRACK A MOVE</button></div>`;
+  return o+S.feed.map(postCard).join('');
+}
 function home(){
-  const h=new Date().getHours(), g=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const h=new Date().getHours(),g=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   const name=S.me?.first_name||tg.initDataUnsafe?.user?.first_name;
-  const next=S.activities.find(a=>a.status==='LIVE'||a.status==='UPCOMING')||S.activities[0];
-  const feat=S.places.find(p=>p.featured)||S.places[0];
-  const days=new Set(S.records.map(r=>String(r.performed_at).slice(0,10))).size;
-  let o=`<div class="card hero"><div class="eyebrow">📍 ADDIS ABABA</div><h2 style="margin:0 0 6px;font-size:20px">${g}${name?', '+esc(name):''}</h2>
-  <p style="color:#cbd5e1;margin:0">DISCOVER ADDIS · MOVE ADDIS · CONNECT ADDIS</p></div>`;
+  const lvp=S.me?S.me.xp%100:0;
+  let o=`<div class="greet"><div><h2>${g}${name?', '+esc(name):''}</h2><small>📍 Addis Ababa · Discover · Move · Connect</small></div>${S.me?`<div class="lv">LVL<b>${S.me.level}</b></div>`:''}</div>`;
   if(!S.me&&!S.err)o+=`<div class="card"><p style="margin:0">Open Addis Active from Telegram to join activities and track your moves.</p></div>`;
-  o+=`<div class="sec">YOUR NEXT MOVE</div>`+(next?actCard(next):`<div class="card"><p style="margin:0">No activities yet.</p></div>`);
+  o+=tuCard();
+  o+=`<div class="qa" style="margin-top:14px"><div data-tab="track"><span>📡</span>Track</div><div data-tab="explore"><span>🧭</span>Explore</div><div data-tab="journey"><span>🎯</span>Goals</div></div>`;
   o+=goalHome();
-  if(feat)o+=`<div class="sec">EXPLORE ADDIS</div><div class="card item" data-place="${feat.id}">${media(feat.media)}<h3>${esc(feat.name)}</h3><p style="margin:0">${esc(PT[feat.place_type]||'')}${feat.area?' · '+esc(feat.area):''}</p></div>`;
-  const nearC=S.communities[0];
-  if(nearC)o+=`<div class="sec">COMMUNITY</div><div class="card item" data-comm="${nearC.id}"><h3>${esc(nearC.name)}</h3><p style="margin:0">View community</p></div>`;
-  o+=territoryCard();
-  o+=nearCard();
-  o+=`<div class="sec">YOUR PROGRESS</div><div class="card">`+(S.records.length||S.joined.size
-    ?`<div class="row"><span>Logged activities</span><b>${S.records.length}</b></div><div class="row"><span>Joined activities</span><b>${S.joined.size}</b></div><div class="row"><span>Active days</span><b>${days}</b></div>`
-    :`<p style="margin:0">Start your first activity.</p>`)+`</div>`;
+  // Nearby: events and locations. Distance only when a place has a VERIFIED coordinate.
+  const hasCoords=S.places.some(p=>p.latitude!=null);
+  const evs=S.activities.filter(a=>a.status!=='COMPLETED'&&a.status!=='CANCELLED').map(a=>({a,d:placeDist(a.place_id&&placeById(a.place_id))})).sort((x,y)=>(x.d==null)-(y.d==null)||(x.d-y.d)).slice(0,8);
+  const locs=S.places.map(p=>({p,d:placeDist(p)})).sort((x,y)=>(x.d==null)-(y.d==null)||(x.d-y.d)||((y.p.featured?1:0)-(x.p.featured?1:0))).slice(0,8);
+  o+=`<div class="sh"><div class="sec">${S.loc?'EVENTS NEAR YOU':'EVENTS & ACTIVITIES'}</div><a data-tab="explore">See all</a></div>`;
+  o+=evs.length?`<div class="hs">${evs.map(x=>eventCard(x.a)).join('')}</div>`:`<div class="card"><p style="margin:0">No events yet.</p></div>`;
+  o+=`<div class="sh"><div class="sec">${S.loc?'LOCATIONS NEAR YOU':'LOCATIONS TO EXPLORE'}</div><a data-tab="explore">See all</a></div>`;
+  o+=locs.length?`<div class="hs">${locs.map(x=>locCard(x.p)).join('')}</div>`:`<div class="card"><p style="margin:0">No locations yet.</p></div>`;
+  if(!S.loc)o+=`<button class="btn ghost" data-useloc style="margin-top:6px">📍 USE MY LOCATION${hasCoords?' TO SORT BY DISTANCE':''}</button>${S.locErr?`<p class="muted" style="font-size:12px;margin:8px 2px 0">${esc(S.locErr)}</p>`:''}${hasCoords?'':`<p class="muted" style="font-size:12px;margin:8px 2px 0">Distances appear once place coordinates are verified.</p>`}`;
+  else o+=`<p class="muted" style="font-size:12px;margin:4px 2px 0">Distances are straight-line and only shown for places with verified coordinates.</p>`;
+  o+=feedBlock();
   return o;
 }
+
+async function loadFeed(){
+  try{const r=await api('/api/feed');S.feed=r.success?r.posts:null}catch(_){S.feed=null}
+  if(S.tab==='home'&&$('sheet').style.display!=='block'){const y=window.scrollY;render();window.scrollTo(0,y)}
+}
+async function useLoc(btn){
+  if(btn)btn.disabled=true;
+  try{const p=await geoOnce();S.loc={lat:p.lat,lng:p.lng};S.locErr=''}catch(e){S.locErr=e.message||'Could not read your location.'}
+  render();
+}
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-useloc],[data-like],[data-unshare]');if(!t)return;
+  if(t.dataset.useloc!==undefined)useLoc(t);
+  else if(t.dataset.like){
+    const p=(S.feed||[]).find(x=>x.id===t.dataset.like);if(!p)return;
+    if(!S.me){toast('Open Addis Active from Telegram to like posts.');return}
+    p.liked=p.liked?0:1;p.likes=Math.max(0,(p.likes||0)+(p.liked?1:-1));const y=window.scrollY;render();window.scrollTo(0,y);
+    if(tg.HapticFeedback)tg.HapticFeedback.impactOccurred('light');
+    try{const r=await api('/api/like',{recordId:p.id});if(!r.success){toast(r.error||'Could not like');loadFeed()}}catch(_){loadFeed()}
+  }
+  else if(t.dataset.unshare){
+    try{const r=await api('/api/unshare',{recordId:t.dataset.unshare});if(r.success){S.feed=(S.feed||[]).filter(x=>x.id!==t.dataset.unshare);toast('Removed from the feed');render()}else toast(r.error||'Could not remove')}catch(_){toast('Network error')}
+  }
+});
 
 function explore(){
   const cnt=t=>S.places.filter(p=>(p.activity_types||[]).includes(t)).length+S.activities.filter(a=>a.category===t).length+S.communities.filter(c=>c.activity_type===t).length;
@@ -224,6 +346,8 @@ function track(){
   <input id="l-dist" type="number" inputmode="decimal" step="0.1" min="0" placeholder="Distance (km)">
   <input id="l-min" type="number" inputmode="numeric" min="1" placeholder="Duration (minutes)">
   <select id="l-place"><option value="">Where? (optional)</option>${pls}</select>
+  <input id="l-cap" maxlength="140" placeholder="Caption for the feed (optional)">
+  <label class="chk"><input type="checkbox" id="l-share" checked> Share to the community feed</label>
   <button class="btn" id="l-save">SAVE ACTIVITY</button></div><div class="sec">MY ACTIVITIES</div>`;
   if(!S.records.length)return o+`<div class="card"><p style="margin:0">Start your first activity.</p></div>`;
   return o+`<div class="card">`+S.records.slice(0,30).map(r=>{
@@ -310,7 +434,7 @@ document.addEventListener('click',async e=>{
   else if(t.id==='l-save'){
     t.disabled=true;
     try{
-      const r=await api('/api/log',{type:$('l-type').value,distanceKm:$('l-dist').value,minutes:$('l-min').value,placeId:$('l-place').value||null});
+      const r=await api('/api/log',{type:$('l-type').value,distanceKm:$('l-dist').value,minutes:$('l-min').value,placeId:$('l-place').value||null,caption:$('l-cap').value,shared:$('l-share').checked});
       toast(r.success?r.message:(r.error||'Could not save'));
       if(r.success){if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');await refresh()}
       else t.disabled=false;
@@ -334,6 +458,14 @@ document.addEventListener('click',e=>{
 
 /* ---------- GPS tracker + nearest ---------- */
 const G={on:false,pts:[],type:'RUNNING',dist:0,t0:0,err:'',errN:0};
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const BG=NATIVE&&Capacitor.registerPlugin?Capacitor.registerPlugin('BackgroundGeolocation'):null;
+function addPoint(lat,lng,acc,t){
+  if(acc>50)return;
+  const p={t,lat:+lat.toFixed(6),lng:+lng.toFixed(6)},l=G.pts[G.pts.length-1];
+  if(l){if(t-l.t<2500)return;const d=hav(l,p);if(d<3)return;G.dist+=d}
+  G.pts.push(p);
+}
 let NEAR=null;
 const hav=(a,b)=>{const R=6371000,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dg=r(b.lng-a.lng),q=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(q))};
 function geoOnce(){return new Promise((res,rej)=>{
@@ -352,24 +484,37 @@ function geoOnce(){return new Promise((res,rej)=>{
 function trackerCard(){
   if(!G.on){
     const opts=AT.filter(t=>t!=='OTHER').map(t=>`<option value="${t}" ${G.type===t?'selected':''}>${ACT[t][0]} ${al(t)}</option>`).join('');
-    return `<div class="card hero"><div class="eyebrow">GPS TRACKER</div><h3 style="color:#fff">Track a move</h3><p style="color:#cbd5e1">Keep the app open and the screen on while you move. Tracking cannot run with the screen locked.</p>${G.err?`<p style="color:#fca5a5">${esc(G.err)}</p>`:''}<select id="g-type">${opts}</select><button class="btn" data-gstart>START</button></div>`;
+    return `<div class="card hero"><div class="eyebrow">GPS TRACKER</div><h3 style="color:#fff">Track a move</h3><p style="color:#cbd5e1">${NATIVE?'You can lock your screen: tracking keeps running and a notification shows while it is active.':'Keep the app open and the screen on while you move. Tracking cannot run with the screen locked.'}</p>${G.err?`<p style="color:#fca5a5">${esc(G.err)}</p>`:''}<select id="g-type">${opts}</select><input id="g-cap" maxlength="140" placeholder="Caption for the feed (optional)" value="${esc(G.cap||'')}"><label class="chk"><input type="checkbox" id="g-share" ${G.share===false?'':'checked'}> Share this move to the community feed</label><button class="btn" data-gstart>START</button></div>`;
   }
   return `<div class="card hero"><div class="eyebrow">TRACKING · ${esc(al(G.type))}</div><h2 id="g-stats" style="margin:4px 0 14px;font-size:30px">0.00 km · 0:00</h2><button class="btn" data-gstop>STOP &amp; SAVE</button><button class="btn ghost" data-gdiscard style="margin-top:8px">DISCARD</button></div>`;
 }
 function gTick(){const el=$('g-stats');if(el){const s=Math.floor((Date.now()-G.t0)/1000);el.textContent=(G.dist/1000).toFixed(2)+' km · '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}}
-function gPoll(){geoOnce().then(p=>{G.errN=0;if(p.acc>50)return;const l=G.pts[G.pts.length-1];if(l){const d=hav(l,p);if(d<3)return;G.dist+=d}G.pts.push({t:p.t,lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)})}).catch(()=>{G.errN++})}
+function gPoll(){geoOnce().then(p=>{G.errN=0;addPoint(p.lat,p.lng,p.acc,p.t)}).catch(()=>{G.errN++})}
 async function gStart(){
-  G.type=$('g-type').value;G.pts=[];G.dist=0;G.err='';G.errN=0;
-  try{const p=await geoOnce();if(p.acc<=50)G.pts=[{t:p.t,lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)}]}catch(e){G.err=e.message;render();return}
+  G.type=$('g-type').value;G.cap=($('g-cap')||{}).value||'';G.share=$('g-share')?$('g-share').checked:true;G.pts=[];G.dist=0;G.err='';G.errN=0;
+  if(BG){
+    // Native app: keeps tracking with the screen off, shows a notification while active
+    let denied=false;
+    try{
+      G.bg=await BG.addWatcher({backgroundTitle:'Addis Active',backgroundMessage:'Tracking your move',requestPermissions:true,stale:false,distanceFilter:8},(loc,err)=>{
+        if(err){if(err.code==='NOT_AUTHORIZED'){denied=true;G.err='Location permission is needed. Allow it in Settings, then try again.';if(BG.openSettings)BG.openSettings()}return}
+        if(loc)addPoint(loc.latitude,loc.longitude,loc.accuracy||30,loc.time||Date.now());
+      });
+    }catch(e){G.err='Could not start tracking: '+(e.message||e);render();return}
+    await new Promise(r=>setTimeout(r,800));
+    if(denied){try{await BG.removeWatcher({id:G.bg})}catch(_){}G.bg=null;render();return}
+    G.on=true;G.t0=Date.now();G.tk=setInterval(gTick,1000);render();return;
+  }
+  try{const p=await geoOnce();addPoint(p.lat,p.lng,p.acc,p.t)}catch(e){G.err=e.message;render();return}
   G.on=true;G.t0=Date.now();
   if(tg.enableClosingConfirmation)tg.enableClosingConfirmation();
   try{G.wl=await navigator.wakeLock.request('screen')}catch(_){}
   G.poll=setInterval(gPoll,4000);G.tk=setInterval(gTick,1000);render();
 }
-function gStop(){clearInterval(G.poll);clearInterval(G.tk);G.on=false;try{G.wl&&G.wl.release()}catch(_){}if(tg.disableClosingConfirmation)tg.disableClosingConfirmation()}
+function gStop(){clearInterval(G.poll);clearInterval(G.tk);G.on=false;if(G.bg!=null&&BG){BG.removeWatcher({id:G.bg}).catch(()=>{});G.bg=null}try{G.wl&&G.wl.release()}catch(_){}if(tg.disableClosingConfirmation)tg.disableClosingConfirmation()}
 async function gSave(){
   const pts=G.pts.slice();gStop();
-  try{const r=await api('/api/track',{type:G.type,points:pts});toast(r.success?r.message:(r.error||'Could not save'));if(r.success)await refresh();else render()}
+  try{const r=await api('/api/track',{type:G.type,points:pts,caption:G.cap,shared:G.share!==false});toast(r.success?r.message:(r.error||'Could not save'));if(r.success)await refresh();else render()}
   catch(_){toast('Network error');render()}
 }
 function nearCard(){
@@ -469,13 +614,17 @@ function streakDays(){
   return n;
 }
 function territory(){
-  const held=S.me?.territory||0;
-  return `<div class="eyebrow">TERRITORY</div><h3 style="margin:0 0 12px;font-size:18px">Claim zones as you move</h3>
-  <div class="tiles"><div class="tile"><span class="te">${held}</span><b>Zones held</b></div><div class="tile"><span class="te">${streakDays()}</span><b>Day streak</b><small>GPS moves</small></div><div class="tile"><span class="te" id="t-rank">–</span><b>Your rank</b><small id="t-rank-s">&nbsp;</small></div></div>
+  const held=S.me?.territory||0,w=S.me?.week||{zones:0,days:0,points:0};
+  return `<div class="eyebrow">TERRITORY</div><h3 style="margin:0 0 12px;font-size:20px">Claim Addis, week by week</h3>
+  <div class="card season"><div style="display:flex;justify-content:space-between;align-items:center"><div class="eyebrow" style="margin:0">WEEKLY SEASON</div><span class="cd">⏱ ${seasonLeft()} left</span></div>
+  <div class="stats3" style="margin:12px 0 0"><div><b id="t-sp">${w.points}</b><small>YOUR POINTS</small></div><div><b id="t-sr">–</b><small id="t-sr-s">SEASON RANK</small></div><div><b>${w.zones}</b><small>ZONES THIS WEEK</small></div></div>
+  <p style="margin:12px 0 0">Every Monday a new season starts. Points come from the zones you visit this week: 10 per zone-day plus up to 5 for effort.</p></div>
+  <div class="tiles"><div class="tile"><span class="te">${held}</span><b>Zones held</b></div><div class="tile"><span class="te">${streakDays()}</span><b>Day streak</b><small>GPS moves</small></div><div class="tile"><span class="te" id="t-rank">–</span><b>Zone rank</b><small id="t-rank-s">&nbsp;</small></div></div>
   <div id="map"></div>
   <button class="btn ghost" data-recenter style="margin-top:10px">📍 CENTER ON ME</button>
-  <div class="card" style="margin-top:14px"><h3>How to win zones</h3><p style="margin:0"><span style="color:var(--gold)">■</span> Yours &nbsp; <span style="color:var(--blue)">■</span> Another mover. Tap a zone for details.<br><br>Each zone is about 275 m wide. Walk, run or ride with GPS to visit zones. The mover with the most points over 30 days holds a zone: <b>10 points for every day you visit</b> (consistency) plus <b>up to 5 for how hard you move</b> (intensity). Come back often and push your pace to take zones over.</p></div>
-  <div class="sec">TOP MOVERS</div><div class="card" id="lb"><p style="margin:0">Loading…</p></div>`;
+  <div class="card" style="margin-top:14px"><h3>How zones work</h3><p style="margin:0"><span style="color:var(--gold)">■</span> Yours &nbsp; <span style="color:var(--blue)">■</span> Another mover. Tap a zone for details.<br><br>Each zone is about 275 m wide. Walk, run or ride with GPS to visit zones. Over 30 days, the mover with the most points holds a zone: <b>10 points for every day you visit</b> (consistency) plus <b>up to 5 for how hard you move</b> (intensity). Come back often and push your pace to take zones over.</p></div>
+  <div class="sec">THIS WEEK'S TOP MOVERS</div><div class="card" id="slb"><p style="margin:0">Loading…</p></div>
+  <div class="sec">MOST ZONES HELD</div><div class="card" id="lb"><p style="margin:0">Loading…</p></div>`;
 }
 function locate(){geoOnce().then(p=>{if(!MAP)return;MAP.setView([p.lat,p.lng],15);if(ME)ME.remove();ME=L.circleMarker([p.lat,p.lng],{radius:7,color:'#fff',weight:2,fillColor:'#22c55e',fillOpacity:1}).addTo(MAP)}).catch(()=>{})}
 function initTMap(){
@@ -502,6 +651,12 @@ function initTMap(){
   api('/api/leaderboard').then(r=>{
     if(!r.success)return;
     if($('t-rank')){$('t-rank').textContent=r.rank?'#'+r.rank:'–';$('t-rank-s').textContent=r.movers?'of '+r.movers+' movers':'no movers yet'}
+    const se=r.season;
+    if(se){
+      if($('t-sp'))$('t-sp').textContent=se.points;
+      if($('t-sr')){$('t-sr').textContent=se.rank?'#'+se.rank:'–';$('t-sr-s').textContent=se.movers?'OF '+se.movers+' MOVERS':'NO MOVERS YET'}
+      if($('slb'))$('slb').innerHTML=se.top.length?se.top.map((t,i)=>`<div class="row" style="${t.me?'color:var(--gold);font-weight:800':''}"><span>${i+1}. ${t.me?'You':'Mover'}</span><span>${t.points} pts</span></div>`).join(''):'<p style="margin:0">No points yet this week. Track a GPS move to start the season.</p>';
+    }
     if($('lb'))$('lb').innerHTML=r.top.length?r.top.map((t,i)=>`<div class="row" style="${t.me?'color:var(--gold);font-weight:800':''}"><span>${i+1}. ${t.me?'You':'Mover'}</span><span>${t.zones} zone${t.zones===1?'':'s'}</span></div>`).join(''):'<p style="margin:0">No zones claimed yet. Be the first: track a GPS move.</p>';
   }).catch(()=>{});
 }
@@ -519,7 +674,7 @@ async function mountLogin(){
   };
   const s=document.createElement('script');s.async=true;s.src='https://telegram.org/js/telegram-widget.js?22';
   s.setAttribute('data-telegram-login',c.botUsername);s.setAttribute('data-size','large');s.setAttribute('data-radius','12');
-  s.setAttribute('data-onauth','onTgAuth(user)');s.setAttribute('data-request-access','write');
+  if(NATIVE)s.setAttribute('data-auth-url',location.origin+'/api/tg-callback');else s.setAttribute('data-onauth','onTgAuth(user)');s.setAttribute('data-request-access','write');
   el.appendChild(s);
 }
 document.addEventListener('click',e=>{
