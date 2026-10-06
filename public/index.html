@@ -203,6 +203,25 @@ html{background:#070b16}
 .dz .im{height:64px;border-radius:12px;background-size:cover;background-position:center;margin-bottom:8px}
 .mini .ph{background-size:cover;background-position:center;font-size:0}
 .tu::after{display:none}
+
+/* ---- v5 match: territories cards, hero, activity rows ---- */
+.cityhero .dc-img{height:250px;background-image:none}
+.cityhero .eb{color:#4ade80}
+.cityhero .dc-img h3{font-size:30px}
+.ac{height:260px}
+.ac .am{font-weight:500;font-size:19px;color:#cbd5e1;margin-left:6px}
+.ac p{margin:2px 0 10px;font-size:13.5px;line-height:1.5;color:#e2e8f0}
+.ac .go{display:flex;align-items:center;gap:12px;font-weight:800;color:#4ade80;font-size:15px}
+.ac .go i{display:block;width:104px;height:5px;border-radius:9px}
+.tag2.pin{color:#f1f5f9;font-size:12px;padding:8px 12px;border-radius:14px}
+.sh2{font-size:21px;font-weight:800;margin:26px 2px 12px}
+.arow{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:12px}
+.arow .t{display:flex;align-items:center;gap:14px}
+.arow .ic{flex:none;width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px}
+.arow .nm{flex:1;min-width:0}.arow .nm b{display:block;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.arow .nm small{color:var(--muted);font-size:12px}
+.arow .dy{text-align:right;flex:none}.arow .dy b{display:block;color:var(--green);font-size:14px}.arow .dy small{color:var(--muted);font-size:12px}
+.arow .b{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:12.5px;color:var(--muted)}
+.arow .jb{padding:7px 16px;font-size:12.5px;border-radius:12px}
 </style>
 </head>
 <body>
@@ -311,6 +330,10 @@ function scene(kind,seed,opt){
 function sceneBg(kind,seed,opt){return `background-image:url('data:image/svg+xml;utf8,${encodeURIComponent(scene(kind,seed,opt)).replace(/'/g,'%27')}')`}
 
 const SHOW_SAMPLE=true; // set to false to hide the "SAMPLE IMAGE" label
+/* YOUR PHOTOS (optional). Put a picture address here and it replaces the sample art everywhere.
+   Keys can be a name (a place, club, area or activity) or a kind (RUNNING, CITY, BOLE, ENTOTO...).
+   Examples:  'Addis Ababa':'/img/addis.jpg',  'Bole':'https://.../bole.jpg',  'Bertusew Running Club':'/img/bertusew.jpg',  'CYCLING':'/img/cycling.jpg' */
+const PHOTOS={};
 function sceneUrl(k,seed,o){return `url('data:image/svg+xml;utf8,${encodeURIComponent(scene(k,seed,o)).replace(/'/g,'%27')}')`}
 function placeKind(p){
   const t=((p.name||'')+' '+(p.area||'')+' '+(p.tags||[]).join(' ')).toLowerCase();
@@ -322,8 +345,9 @@ function placeKind(p){
   return (p.activity_types||[])[0]||'WALKING';
 }
 // real photo from the media table wins; otherwise a sample illustration
-function artStyle(m,kind,seed,o){return m&&m.thumbnail?`background-image:url('${esc(m.thumbnail)}')`:`background-image:${sceneUrl(kind,seed,o)}`}
-const smp=m=>SHOW_SAMPLE&&!(m&&m.thumbnail)?'<span class="smp">SAMPLE IMAGE</span>':'';
+const photoOf=(kind,seed)=>PHOTOS[seed]||PHOTOS[kind]||null;
+function artStyle(m,kind,seed,o){const u=m&&m.thumbnail?m.thumbnail:photoOf(kind,seed);return u?`background-image:url('${esc(u)}')`:`background-image:${sceneUrl(kind,seed,o)}`}
+const smp=(m,kind,seed)=>SHOW_SAMPLE&&!(m&&m.thumbnail)&&!photoOf(kind,seed)?'<span class="smp">SAMPLE IMAGE</span>':'';
 
 
 const tok=()=>{try{return localStorage.getItem('aa_token')}catch(_){return null}};
@@ -374,7 +398,7 @@ function imgStyle(m){return m&&m.thumbnail?`background-image:url('${esc(m.thumbn
 function actTag(t){const a=ACT[t]||ACT.OTHER;return `<span class="tag c-${ACT[t]?t:'OTHER'}">${a[0]} ${esc(a[1])}</span>`}
 function actCard(a){
   const pl=a.place_id?placeById(a.place_id):null, cm=a.community_id?commById(a.community_id):null, done=S.joined.has(a.id);
-  return `<div class="dc"><div class="dc-img" style="${artStyle(null,a.category||'OTHER',a.name)}">${smp()}${actTag(a.category)}<span class="tag2">${esc(a.status)}</span><h3>${esc(a.name)}</h3>${cm?`<div class="sub">${esc(cm.name)}</div>`:''}</div>
+  return `<div class="dc"><div class="dc-img" style="${artStyle(null,a.category||'OTHER',a.name)}">${smp(null,a.category,a.name)}${actTag(a.category)}<span class="tag2">${esc(a.status)}</span><h3>${esc(a.name)}</h3>${cm?`<div class="sub">${esc(cm.name)}</div>`:''}</div>
   ${a.description?`<div class="dc-b"><p>${esc(a.description)}</p></div>`:''}
   <div class="dc-m"><span>📍 ${pl?esc(pl.name):'Location to be verified'}</span><span>📅 ${when(a)}</span></div>
   <div class="dc-f"><span class="nx ${a.date?'':'mu'}">${a.date?'Next: '+when(a):'Date to be announced'}</span><button class="jb" data-join="${a.id}" ${done?'disabled':''}>${done?'Joined ✓':'Join ›'}</button></div></div>`;
@@ -382,7 +406,7 @@ function actCard(a){
 function placeX(p){
   const d=placeDist(p),acts=(p.activity_types||[]),first=acts[0]||'OTHER';
   const n=S.activities.filter(a=>a.place_id===p.id&&a.status!=='CANCELLED').length;
-  return `<div class="dc item" data-place="${p.id}"><div class="dc-img" style="${artStyle(p.media,placeKind(p),p.name)}">${smp(p.media)}${actTag(first)}${p.featured?'<span class="tag2">⭐ FEATURED</span>':''}<h3>${esc(p.name)}</h3><div class="sub">📍 ${p.area?esc(p.area):'Addis Ababa'}${d!=null?' · <b style="color:var(--green)">'+distTxt(d)+'</b>':''}</div></div>
+  return `<div class="dc item" data-place="${p.id}"><div class="dc-img" style="${artStyle(p.media,placeKind(p),p.name)}">${smp(p.media,placeKind(p),p.name)}${actTag(first)}${p.featured?'<span class="tag2">⭐ FEATURED</span>':''}<h3>${esc(p.name)}</h3><div class="sub">📍 ${p.area?esc(p.area):'Addis Ababa'}${d!=null?' · <b style="color:var(--green)">'+distTxt(d)+'</b>':''}</div></div>
   <div class="dc-b"><p>${p.description?esc(p.description):'<span class="muted">Details, distance and access: information to be verified.</span>'}</p></div>
   <div class="fc"><span class="pillx">${esc(PT[p.place_type]||'Place')}</span>${acts.slice(0,3).map(t=>`<span class="pillx">${(ACT[t]||ACT.OTHER)[0]} ${esc(al(t))}</span>`).join('')}${n?`<span class="pillx">${n} activit${n===1?'y':'ies'}</span>`:''}${dataBadge(p.data_status)}<span class="more">Details ›</span></div></div>`;
 }
@@ -392,7 +416,7 @@ function commX(c){
   const nx=S.activities.filter(a=>a.community_id===c.id&&a.status!=='CANCELLED'&&a.status!=='COMPLETED'&&a.date&&a.date>=today).sort((x,y)=>x.date<y.date?-1:1)[0];
   const sched=typeof c.schedule==='string'&&c.schedule?c.schedule:null;
   const done=nx&&S.joined.has(nx.id);
-  return `<div class="dc item" data-comm="${c.id}"><div class="dc-img" style="${artStyle(null,t,c.name,{group:true})}">${smp()}${c.activity_type?actTag(t):''}<span class="tag2">${c.data_status==='VERIFIED'?'✔ VERIFIED':'TO BE VERIFIED'}</span><h3>${esc(c.name)}</h3>${c.tagline?`<div class="sub">${esc(c.tagline)}</div>`:''}</div>
+  return `<div class="dc item" data-comm="${c.id}"><div class="dc-img" style="${artStyle(null,t,c.name,{group:true})}">${smp(null,t,c.name)}${c.activity_type?actTag(t):''}<span class="tag2">${c.data_status==='VERIFIED'?'✔ VERIFIED':'TO BE VERIFIED'}</span><h3>${esc(c.name)}</h3>${c.tagline?`<div class="sub">${esc(c.tagline)}</div>`:''}</div>
   <div class="dc-b"><p>${c.description?esc(c.description):'<span class="muted">Description, members and organizers: information to be verified.</span>'}</p></div>
   <div class="dc-m"><span>📍 ${pl?esc(pl.name):'Meeting place to be verified'}</span><span>📅 ${sched?esc(sched):'Schedule to be verified'}</span></div>
   <div class="dc-f"><span class="nx ${nx?'':'mu'}">${nx?'Next: '+when(nx):'Next session to be announced'}</span>${nx?`<button class="jb" data-join="${nx.id}" ${done?'disabled':''}>${done?'Joined ✓':'Join ›'}</button>`:`<button class="jb" style="background:transparent;border-color:var(--line);color:var(--text)" data-comm="${c.id}">View ›</button>`}</div></div>`;
@@ -496,16 +520,35 @@ document.addEventListener('click',async e=>{
   }
 });
 
+const AREAS=[
+ ['Bole','ቦሌ','Modern hub with wide boulevards and an international feel.',['bole'],'BOLE','#22c55e'],
+ ['Piassa','ፒያሳ','Historic heart of Addis with old streets and cultural energy.',['piassa','arat kilo'],'CITY','#f97316'],
+ ['Entoto & Yeka','የካ','Home to Entoto Mountain trails, forest paths and views.',['entoto','yeka'],'ENTOTO','#8b5cf6'],
+ ['Central & Meskel','መስቀል','The city centre around Meskel Square and Kazanchis.',['meskel','kazanchis','central'],'CITY','#38bdf8'],
+ ['Megenagna & Gerji','መገናኛ','Busy neighbourhoods on the east side of the city.',['megenagna','gerji','cmc'],'BOLE','#eab308'],
+ ['Gullele & Unity','ጉለሌ','Gardens and historic grounds in the north.',['gullele','unity','botanical'],'UNITY','#14b8a6'],
+ ['Sheger & Sports','ሸገር','Riverside paths, parks and sport facilities.',['sheger','friendship','riverside','kebena','sport'],'STADIUM','#ec4899'],
+ ['Jemo','ጀሞ','South-west neighbourhood for everyday walks.',['jemo'],'WALKING','#f43f5e']
+];
+const areaCount=a=>S.places.filter(p=>a[3].some(k=>((p.name||'')+' '+(p.area||'')+' '+(p.tags||[]).join(' ')).toLowerCase().includes(k))).length;
+function areaCard(a,i){
+  const n=areaCount(a);
+  return `<div class="dc item" data-area="${i}"><div class="dc-img ac" style="${artStyle(null,a[4],a[0])}">${smp(null,a[4],a[0])}<span class="tag2 pin">📍 ${n} spot${n===1?'':'s'}</span><h3>${esc(a[0])}<span class="am">${a[1]}</span></h3><p>${esc(a[2])}</p><div class="go"><i style="background:${a[5]}"></i>Explore ↗</div></div></div>`;
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-area]');if(!t)return;const a=AREAS[+t.dataset.area];S.q=a[3].join('|');S.qShow=a[0];S.act='ALL';S.type='ALL';render();setTimeout(()=>{const r=$('allplaces');if(r)r.scrollIntoView({behavior:'smooth',block:'start'})},120)});
 function explore(){
   const chips=['ALL',...Object.keys(PT)].map(t=>`<div class="chip ${S.type===t?'on':''}" data-type="${t}">${t==='ALL'?'All places':PT[t]}</div>`).join('');
-  const acts=[['ALL','All',''],...Object.keys(ACT).filter(t=>t!=='OTHER').map(t=>[t,ACT[t][1],ACT[t][0]])].map(([k,l,e])=>`<div class="chip ${S.act===k?'on':''}" data-act="${k==='ALL'?(S.act==='ALL'?'ALL':S.act):k}" ${k==='ALL'?'data-actall':''}>${e?`<span>${e}</span>`:''}${l}</div>`).join('');
-  return `<div class="exh"><div class="eyebrow">DISCOVER ADDIS · MOVE ADDIS</div><h2 style="margin-bottom:6px">Explore Addis</h2><p class="muted" style="margin:0 0 14px;font-size:13px">${S.places.length} places · ${S.activities.length} activities · ${S.communities.length} communities listed</p></div>
-  <div class="dc cityhero"><div class="dc-img" style="background-image:${sceneUrl('CITY','addis')}">${smp()}<div class="eb">ADDIS ABABA</div><h3 style="font-size:25px">The New Flower City</h3><div class="sub" style="font-size:13px">Train at about 2,355 m above sea level</div></div></div>
-  <input id="q" placeholder="Search Addis: places, activities, clubs" value="${esc(S.q)}" autocomplete="off">
+  const acts=[['ALL','All',''],...Object.keys(ACT).filter(t=>t!=='OTHER').map(t=>[t,ACT[t][1],ACT[t][0]])].map(([k,l,e])=>`<div class="chip ${S.act===k?'on':''}" data-act="${k}" ${k==='ALL'?'data-actall':''}>${e?`<span>${e}</span>`:''}${l}</div>`).join('');
+  const ar=AREAS.map((a,i)=>[a,i]).filter(([a])=>areaCount(a)>0);
+  return `<div class="exh"><h2 style="font-size:32px;margin-bottom:6px">Explore Addis</h2><p class="muted" style="margin:0 0 14px;font-size:14px">Discover ${S.places.length} place${S.places.length===1?'':'s'}${ar.length?` across ${ar.length} area${ar.length===1?'':'s'}`:''} in the city</p></div>
+  <input id="q" placeholder="Search Addis: places, activities, clubs" value="${esc(S.qShow!=null?S.qShow:S.q)}" autocomplete="off">
+  <div class="dc cityhero"><div class="dc-img" style="${artStyle(null,'CITY','Addis Ababa')}">${smp(null,'CITY','Addis Ababa')}<div class="eb">ADDIS ABABA</div><h3>The New Flower City</h3><div class="sub" style="font-size:14px;line-height:1.5">2,355 m above sea level: high-altitude training at its finest</div></div></div>
+  ${ar.length?`<div class="sh2">Territories</div>`+ar.map(([a,i])=>areaCard(a,i)).join(''):''}
+  <div class="sh2" id="allplaces">Find your move</div>
   <div class="chips act">${acts}</div><div class="chips">${chips}</div><div id="results"></div>`;
 }
 function results(){
-  const q=S.q.trim().toLowerCase(),A=S.act,hit=(...f)=>!q||f.some(x=>String(x||'').toLowerCase().includes(q));
+  const q=S.q.trim().toLowerCase(),qs=q.split('|').filter(Boolean),A=S.act,hit=(...f)=>!qs.length||f.some(x=>qs.some(z=>String(x||'').toLowerCase().includes(z)));
   const pl=S.places.filter(p=>(S.type==='ALL'||p.place_type===S.type)&&(A==='ALL'||(p.activity_types||[]).includes(A))&&hit(p.name,p.area,PT[p.place_type],(p.tags||[]).join(' '),(p.activity_types||[]).map(al).join(' ')));
   const ac=(q||A!=='ALL')?S.activities.filter(a=>(A==='ALL'||a.category===A)&&hit(a.name,al(a.category),a.description)):[];
   const cm=(q||A!=='ALL')?S.communities.filter(c=>(A==='ALL'||c.activity_type===A)&&hit(c.name,al(c.activity_type),c.tagline)):[];
@@ -516,9 +559,20 @@ function results(){
   $('results').innerHTML=o||`<div class="card"><p style="margin:0">Nothing listed yet${A!=='ALL'?' for '+esc(al(A)):''}. Try another activity or word.</p></div>`;
 }
 
+function actRow(a){
+  const pl=a.place_id?placeById(a.place_id):null,cm=a.community_id?commById(a.community_id):null,done=S.joined.has(a.id),d=placeDist(pl);
+  const day=a.date?new Date(a.date+'T00:00:00').toLocaleDateString(undefined,{weekday:'long'}):'Date TBA';
+  const em=(ACT[a.category]||ACT.OTHER)[0];
+  return `<div class="arow"><div class="t"><div class="ic ${BGC(a.category)}">${em}</div><div class="nm"><b>${esc(a.name)}</b><small>${cm?esc(cm.name):esc(a.status)}</small></div><div class="dy"><b>${esc(day)}</b><small>${a.time?esc(String(a.time).slice(0,5)):'Time TBA'}</small></div></div>
+  <div class="b"><span>📍 ${pl?esc(pl.name):'Location to be verified'}${d!=null?' · <span class="dist">'+distTxt(d)+'</span>':''}</span><button class="jb" data-join="${a.id}" ${done?'disabled':''}>${done?'Joined ✓':'Join ›'}</button></div></div>`;
+}
 function community(){
-  if(!S.communities.length)return `<div class="card"><p style="margin:0">Find people who move like you.</p></div>`;
-  return `<div class="exh"><div class="eyebrow">CONNECT ADDIS</div><h2 style="margin-bottom:14px">Communities</h2></div>`+S.communities.map(commX).join('');
+  const ups=S.activities.filter(a=>a.status!=='COMPLETED'&&a.status!=='CANCELLED').slice(0,4);
+  let o=`<div class="exh"><div class="eyebrow">CONNECT ADDIS</div></div>`;
+  if(ups.length)o+=`<div class="sh2" style="margin-top:4px">This week</div>`+ups.map(actRow).join('');
+  o+=`<div class="sh2">Communities</div>`;
+  o+=S.communities.length?S.communities.map(commX).join(''):`<div class="card"><p style="margin:0">Find people who move like you.</p></div>`;
+  return o;
 }
 
 function track(){
@@ -626,7 +680,7 @@ document.addEventListener('click',async e=>{
     }catch(_){toast('Network error');t.disabled=false}
   }
 });
-document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;results()}});
+document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;S.qShow=null;results()}});
 
 /* ---------- sign-in gate (shown on every open) ---------- */
 function gate(){
