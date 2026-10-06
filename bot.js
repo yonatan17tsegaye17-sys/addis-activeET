@@ -789,6 +789,15 @@ module.exports = async (req, res) => {
         res.setHeader('Cache-Control', 'no-cache');
         return res.status(200).send(SW);
       }
+      if (/^\/img\/[\w.-]+\.(jpg|jpeg|png|webp)$/i.test(p)) {
+        try {
+          const buf = fs.readFileSync(path.join(__dirname, 'public', p));
+          const ext = p.split('.').pop().toLowerCase();
+          res.setHeader('Content-Type', ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          return res.status(200).send(buf);
+        } catch (e) { return res.status(404).send('Not found'); }
+      }
       if (p === '/icon-192.png' || p === '/icon-512.png') {
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Cache-Control', 'public, max-age=86400');
